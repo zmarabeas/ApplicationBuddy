@@ -1,74 +1,90 @@
-# JobFillr
+# ApplicationBuddy
 
-A smart browser extension and web application designed to automate the tedious process of filling out job applications.
+A comprehensive job application automation platform with web portal and browser extension integration.
 
-## Project Description
+## Project Overview
 
-JobFillr consists of two main components:
-1. **Web Portal**: Manage your personal information, work history, education, and skills
-2. **Browser Extension**: Automatically fill job application forms with your stored data
+ApplicationBuddy is a full-stack application that helps users automate their job application process through:
+- A NextJS web portal for profile management and data storage
+- A browser extension for form auto-filling
+- Firebase backend for authentication and data storage
+- Vercel deployment for the web application
 
-## Current Status
-
-The web portal is functional with:
-- User authentication via Firebase (email/password and Google)
-- Profile management for personal details, work history, education, and skills
-- Resume upload and parsing via OpenAI
-- Cyberpunk-themed dark UI
-
-The browser extension is under active development with:
-- Authentication integration with the web portal
-- Configurable API endpoints for different environments
-- Form field detection and auto-filling capabilities
-- Secure token handling and storage
-
-## Installation
+## Quick Start
 
 ### Prerequisites
 - Node.js 18+
+- npm 9+
 - Firebase account
-- OpenAI API key
+- Vercel account (for deployment)
 
-### Setup
+### Development Setup
 1. Clone the repository
-2. Run `npm install` to install dependencies
-3. Configure Firebase:
-   - Create a Firebase project
-   - Enable Authentication (Email/Password and Google)
-   - Set up Firestore Database
-   - Add your Replit URL to authorized domains
-4. Set environment variables:
-   - OPENAI_API_KEY
-   - FIREBASE_PRIVATE_KEY
-   - FIREBASE_CLIENT_EMAIL
-   - VITE_FIREBASE_API_KEY
-   - VITE_FIREBASE_PROJECT_ID
-   - VITE_FIREBASE_APP_ID
-5. Run `npm run dev` to start the development server
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env.local
+   ```
+4. Configure Firebase credentials in `.env.local`
+5. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-## Usage
+## Project Structure
 
-1. Register or log in to your account
-2. Complete your profile information or upload a resume
-3. Use the copy buttons to easily transfer information to job applications
+```
+ApplicationBuddy/
+├── api/                 # API routes and server logic
+├── components/         # React components
+├── docs/              # Project documentation
+├── public/            # Static assets
+└── src/               # Source code
+```
 
-### Extension Setup
-1. Update the `extension/config.js` file with your deployment URL
-2. Load the extension in Chrome/Edge by going to chrome://extensions
-3. Enable "Developer mode" and click "Load unpacked"
-4. Select the "extension" folder from this repository
-5. Log in with your JobFillr account credentials
-6. Navigate to job application forms and use the extension to auto-fill
+## Documentation
 
-## Dependencies
+- [Setup Guide](SETUP.md) - Detailed setup instructions
+- [Architecture](ARCHITECTURE.md) - System design and decisions
+- [API Documentation](API.md) - API endpoints and usage
+- [Deployment Guide](DEPLOYMENT.md) - Deployment process
+- [Troubleshooting](TROUBLESHOOTING.md) - Common issues and solutions
+- [Development Guide](DEVELOPMENT.md) - Development workflows
+- [Changelog](CHANGELOG.md) - Recent changes and progress
 
-- React for frontend UI
-- Express.js for backend API
-- Firebase for authentication and database
-- OpenAI for resume parsing
-- Shadcn UI components
-- TailwindCSS for styling
+## Current Status
+
+### Completed
+- ✅ Firebase integration and authentication
+- ✅ Basic API endpoints implementation
+- ✅ Data storage with Firestore
+- ✅ Browser extension foundation
+- ✅ Deployment configuration fixes
+- ✅ API bug resolutions
+- ✅ Codebase cleanup
+
+### In Progress
+- 🔄 Home page development
+- 🔄 Enhanced form detection
+- 🔄 Profile completion tracking
+
+### Next Steps
+- Implement home page design
+- Enhance browser extension functionality
+- Add more template questions
+- Improve form field detection accuracy
 
 ## Contributing
 
-Contributions are welcome. Please fork the repository and submit pull requests.
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
