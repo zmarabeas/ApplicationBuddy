@@ -29,7 +29,7 @@ let mammoth: any;
 // Setup multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const tempDir = path.join(os.tmpdir(), 'jobfillr-uploads');
+    const tempDir = path.join(os.tmpdir(), 'applicationbuddy-uploads');
     fs.mkdir(tempDir, { recursive: true }, (err) => {
       if (err) {
         console.error('Error creating temp directory:', err);

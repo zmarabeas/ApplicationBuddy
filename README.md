@@ -1,15 +1,16 @@
-# JobFillr
+# ApplicationBuddy
 
 A smart browser extension and web application that streamlines job applications by automatically filling out forms with your profile information.
 
 ## Project Description
 
-JobFillr consists of two integrated components:
+ApplicationBuddy consists of two integrated components:
 
 1. **Web Portal**: A centralized platform to manage your profile, work history, education, and skills
 2. **Browser Extension**: An intelligent tool that detects and fills job application forms automatically
 
 Key features:
+
 - Firebase authentication (email/password and Google)
 - AI-powered resume parsing with OpenAI
 - Intelligent form field detection
@@ -30,11 +31,13 @@ The project is fully functional with:
 ## Installation
 
 ### Prerequisites
+
 - Node.js 18+
 - Firebase account
 - OpenAI API key
 
 ### Setup
+
 1. Clone the repository
 2. Run `npm install` to install dependencies
 3. Configure Firebase:
@@ -56,7 +59,7 @@ The project is fully functional with:
 1. Navigate to chrome://extensions in Chrome
 2. Enable Developer Mode
 3. Click "Load unpacked" and select the `extension` folder
-4. Log in with your JobFillr account credentials
+4. Log in with your ApplicationBuddy account credentials
 5. Navigate to any job application form
 6. Click the extension icon
 7. Use the "Scan Page" button to detect form fields
@@ -78,4 +81,4 @@ Contributions are welcome! Please review our documentation before submitting pul
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.# ApplicationBuddy
+This project is licensed under the MIT License - see the LICENSE file for details.

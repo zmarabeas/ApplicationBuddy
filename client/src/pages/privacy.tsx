@@ -32,7 +32,7 @@ export default function Privacy() {
       // Create a temporary link and trigger download
       const a = document.createElement("a");
       a.href = url;
-      a.download = `jobfillr-data-export-${new Date().toISOString().split("T")[0]}.json`;
+      a.download = `applicationbuddy-data-export-${new Date().toISOString().split("T")[0]}.json`;
       document.body.appendChild(a);
       a.click();
       
@@ -100,11 +100,11 @@ export default function Privacy() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="prose prose-sm dark:prose-invert">
-              <h2>JobFillr Privacy Policy</h2>
+              <h2>ApplicationBuddy Privacy Policy</h2>
               <p>Last Updated: May 1, 2025</p>
               
               <p>
-                At JobFillr, we're committed to protecting your privacy and ensuring you have control over your personal data.
+                At ApplicationBuddy, we're committed to protecting your privacy and ensuring you have control over your personal data.
                 This Privacy Policy explains how we collect, use, and protect your information when you use our service.
               </p>
 
@@ -112,18 +112,18 @@ export default function Privacy() {
                 <AccordionItem value="item-1">
                   <AccordionTrigger>Data We Collect</AccordionTrigger>
                   <AccordionContent>
-                    <p><strong>Personal Information:</strong> When you register for JobFillr, we collect your email address and name.</p>
+                    <p><strong>Personal Information:</strong> When you register for ApplicationBuddy, we collect your email address and name.</p>
                     <p><strong>Profile Information:</strong> Information you provide in your profile, including contact details, work experience, education history, skills, and resume content.</p>
                     <p><strong>Usage Data:</strong> We collect information about how you interact with our service, including forms filled and applications submitted.</p>
-                    <p><strong>Device Information:</strong> We collect information about the browser and device you use to access JobFillr.</p>
+                    <p><strong>Device Information:</strong> We collect information about the browser and device you use to access ApplicationBuddy.</p>
                   </AccordionContent>
                 </AccordionItem>
 
                 <AccordionItem value="item-2">
                   <AccordionTrigger>How We Use Your Data</AccordionTrigger>
                   <AccordionContent>
-                    <p><strong>To Provide Our Service:</strong> We use your data to operate and improve JobFillr, including automatically filling job applications.</p>
-                    <p><strong>Communication:</strong> We may use your email to send you updates about JobFillr or respond to your inquiries.</p>
+                    <p><strong>To Provide Our Service:</strong> We use your data to operate and improve ApplicationBuddy, including automatically filling job applications.</p>
+                    <p><strong>Communication:</strong> We may use your email to send you updates about ApplicationBuddy or respond to your inquiries.</p>
                     <p><strong>Service Improvement:</strong> We analyze usage patterns to improve our features and user experience.</p>
                     <p><strong>Legal Compliance:</strong> We may use your data to comply with applicable laws and regulations.</p>
                   </AccordionContent>
@@ -133,7 +133,7 @@ export default function Privacy() {
                   <AccordionTrigger>Data Sharing</AccordionTrigger>
                   <AccordionContent>
                     <p><strong>Third-Party Services:</strong> We use Firebase for authentication and data storage. Their privacy policies apply to how they handle your data.</p>
-                    <p><strong>With Your Consent:</strong> When you use JobFillr to fill out job applications, your information is shared with the job site you're applying through.</p>
+                    <p><strong>With Your Consent:</strong> When you use ApplicationBuddy to fill out job applications, your information is shared with the job site you're applying through.</p>
                     <p><strong>Legal Requirements:</strong> We may disclose your information if required by law or to protect rights and safety.</p>
                   </AccordionContent>
                 </AccordionItem>
@@ -166,7 +166,7 @@ export default function Privacy() {
                 <AccordionItem value="item-6">
                   <AccordionTrigger>Cookie Policy</AccordionTrigger>
                   <AccordionContent>
-                    <p>We use cookies and similar technologies to enhance your experience with JobFillr.</p>
+                    <p>We use cookies and similar technologies to enhance your experience with ApplicationBuddy.</p>
                     <p><strong>Essential Cookies:</strong> Required for the service to function properly, including authentication.</p>
                     <p><strong>Preference Cookies:</strong> Store your preferences and settings.</p>
                     <p><strong>Analytics Cookies:</strong> Help us understand how users interact with our service.</p>
@@ -186,7 +186,7 @@ export default function Privacy() {
                   <AccordionTrigger>Contact Us</AccordionTrigger>
                   <AccordionContent>
                     <p>If you have any questions about this Privacy Policy or our data practices, please contact us at:</p>
-                    <p>Email: privacy@jobfillr.com</p>
+                    <p>Email: privacy@applicationbuddy.com</p>
                     <p>We will respond to your request within 30 days.</p>
                   </AccordionContent>
                 </AccordionItem>
@@ -223,7 +223,7 @@ export default function Privacy() {
             
             <div className="text-sm text-muted-foreground mt-4">
               <p>
-                <strong>Export Data:</strong> Download a copy of all your personal data stored by JobFillr, including profile information, 
+                <strong>Export Data:</strong> Download a copy of all your personal data stored by ApplicationBuddy, including profile information, 
                 work experiences, education history, skills, and resumes.
               </p>
               <p className="mt-2">

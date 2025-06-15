@@ -48,15 +48,15 @@ export default function Help() {
           <CardHeader>
             <CardTitle>Frequently Asked Questions</CardTitle>
             <CardDescription>
-              Find answers to commonly asked questions about JobFillr
+              Find answers to commonly asked questions about ApplicationBuddy
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">
-                <AccordionTrigger>How does JobFillr detect form fields?</AccordionTrigger>
+                <AccordionTrigger>How does ApplicationBuddy detect form fields?</AccordionTrigger>
                 <AccordionContent>
-                  JobFillr uses advanced algorithms to analyze web pages and identify form fields based on various attributes like field names, labels, placeholders, and context. The system constantly learns from user interactions to improve accuracy over time.
+                  ApplicationBuddy uses advanced algorithms to analyze web pages and identify form fields based on various attributes like field names, labels, placeholders, and context. The system constantly learns from user interactions to improve accuracy over time.
                 </AccordionContent>
               </AccordionItem>
               
@@ -70,28 +70,28 @@ export default function Help() {
               <AccordionItem value="item-3">
                 <AccordionTrigger>What file formats are supported for resume uploads?</AccordionTrigger>
                 <AccordionContent>
-                  JobFillr currently supports PDF and DOCX file formats for resume uploads. The maximum file size is 10MB. We're working on adding support for additional formats in the future.
+                  ApplicationBuddy currently supports PDF and DOCX file formats for resume uploads. The maximum file size is 10MB. We're working on adding support for additional formats in the future.
                 </AccordionContent>
               </AccordionItem>
               
               <AccordionItem value="item-4">
                 <AccordionTrigger>How accurate is the auto-fill functionality?</AccordionTrigger>
                 <AccordionContent>
-                  JobFillr's auto-fill accuracy depends on several factors, including the complexity of the job application form and how complete your profile is. In general, our system achieves high accuracy for standard fields like personal information, work history, and education. You can always review and correct any fields before submitting applications.
+                  ApplicationBuddy's auto-fill accuracy depends on several factors, including the complexity of the job application form and how complete your profile is. In general, our system achieves high accuracy for standard fields like personal information, work history, and education. You can always review and correct any fields before submitting applications.
                 </AccordionContent>
               </AccordionItem>
               
               <AccordionItem value="item-5">
                 <AccordionTrigger>Which browsers are supported?</AccordionTrigger>
                 <AccordionContent>
-                  Currently, the JobFillr extension is available for Google Chrome and Brave browsers. We're working on adding support for Firefox, Safari, and other browsers in the near future.
+                  Currently, the ApplicationBuddy extension is available for Google Chrome and Brave browsers. We're working on adding support for Firefox, Safari, and other browsers in the near future.
                 </AccordionContent>
               </AccordionItem>
               
               <AccordionItem value="item-6">
                 <AccordionTrigger>How do I install the browser extension?</AccordionTrigger>
                 <AccordionContent>
-                  To install the JobFillr extension, click on the "Install Extension" button on your dashboard or settings page. This will take you to the Chrome Web Store where you can add the extension to your browser with just one click. After installation, you'll need to log in to the extension using your JobFillr account credentials.
+                  To install the ApplicationBuddy extension, click on the "Install Extension" button on your dashboard or settings page. This will take you to the Chrome Web Store where you can add the extension to your browser with just one click. After installation, you'll need to log in to the extension using your ApplicationBuddy account credentials.
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
@@ -106,7 +106,7 @@ export default function Help() {
               Browser Extension
             </CardTitle>
             <CardDescription>
-              Learn how to use the JobFillr browser extension effectively
+              Learn how to use the ApplicationBuddy browser extension effectively
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -114,9 +114,9 @@ export default function Help() {
               <h3 className="text-md font-medium">Getting Started</h3>
               <ol className="list-decimal list-inside space-y-2 text-sm text-gray-600 pl-2">
                 <li>Install the extension from the Chrome Web Store</li>
-                <li>Log in using your JobFillr account credentials</li>
+                <li>Log in using your ApplicationBuddy account credentials</li>
                 <li>Navigate to any job application form</li>
-                <li>Click the JobFillr icon in your browser toolbar</li>
+                <li>Click the ApplicationBuddy icon in your browser toolbar</li>
                 <li>Review detected fields and click "Auto-Fill" to populate the form</li>
               </ol>
             </div>

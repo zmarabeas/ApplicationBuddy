@@ -23,7 +23,7 @@ app.use(session({
     tableName: 'session',
     createTableIfMissing: true
   }),
-  secret: process.env.SESSION_SECRET || 'jobfillr-dev-secret',
+  secret: process.env.SESSION_SECRET || 'applicationbuddy-dev-secret',
   resave: false,
   saveUninitialized: false,
   cookie: {

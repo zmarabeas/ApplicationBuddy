@@ -40,7 +40,7 @@ export default function ProfileModal({ open, onOpenChange }: ProfileModalProps) 
             <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
               <DialogTitle>Complete Your Profile</DialogTitle>
               <DialogDescription>
-                Fill in your profile information to get the most out of JobFillr.
+                Fill in your profile information to get the most out of ApplicationBuddy.
               </DialogDescription>
             </div>
           </div>
