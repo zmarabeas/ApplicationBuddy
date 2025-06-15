@@ -3,8 +3,21 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
+// Common configuration
+const commonConfig: UserConfig = {
+  resolve: {
+    alias: {
+      "@": path.resolve(import.meta.dirname, "client", "src"),
+      "@shared": path.resolve(import.meta.dirname, "shared"),
+      "@assets": path.resolve(import.meta.dirname, "attached_assets"),
+      "@api": path.resolve(import.meta.dirname, "api"),
+    },
+  },
+};
+
 // Client-side configuration
 const clientConfig: UserConfig = {
+  ...commonConfig,
   plugins: [
     react(),
     runtimeErrorOverlay(),
@@ -17,13 +30,6 @@ const clientConfig: UserConfig = {
         ]
       : []),
   ],
-  resolve: {
-    alias: {
-      "@": path.resolve(import.meta.dirname, "client", "src"),
-      "@shared": path.resolve(import.meta.dirname, "shared"),
-      "@assets": path.resolve(import.meta.dirname, "attached_assets"),
-    },
-  },
   root: path.resolve(import.meta.dirname, "client"),
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
@@ -85,13 +91,7 @@ const clientConfig: UserConfig = {
 
 // Server-side configuration
 const serverConfig: UserConfig = {
-  resolve: {
-    alias: {
-      "@": path.resolve(import.meta.dirname, "client", "src"),
-      "@shared": path.resolve(import.meta.dirname, "shared"),
-      "@assets": path.resolve(import.meta.dirname, "attached_assets"),
-    },
-  },
+  ...commonConfig,
   build: {
     outDir: path.resolve(import.meta.dirname, "dist"),
     emptyOutDir: true,
@@ -120,7 +120,35 @@ const serverConfig: UserConfig = {
         'drizzle-orm',
         'drizzle-zod',
         'zod',
-        'pg'
+        'pg',
+        'path',
+        'fs',
+        'crypto',
+        'stream',
+        'util',
+        'url',
+        'http',
+        'https',
+        'os',
+        'net',
+        'tls',
+        'zlib',
+        'events',
+        'buffer',
+        'string_decoder',
+        'querystring',
+        'punycode',
+        'dns',
+        'dgram',
+        'child_process',
+        'cluster',
+        'module',
+        'vm',
+        'constants',
+        'assert',
+        'timers',
+        'domain',
+        'process'
       ],
       output: {
         format: 'esm',
