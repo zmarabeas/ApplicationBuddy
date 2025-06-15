@@ -29,6 +29,7 @@ const clientConfig: UserConfig = {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
     rollupOptions: {
+      input: 'client/src/main.tsx',
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom'],
@@ -104,7 +105,13 @@ const serverConfig: UserConfig = {
         'multer',
         'openai',
         'pdf-parse',
-        'mammoth'
+        'mammoth',
+        '@mui/material',
+        '@mui/icons-material',
+        '@emotion/react',
+        '@emotion/styled',
+        'react',
+        'react-dom'
       ]
     }
   }
@@ -113,23 +120,7 @@ const serverConfig: UserConfig = {
 // Export the appropriate config based on the build target
 export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
   if (command === 'build' && mode === 'production') {
-    const buildConfig = clientConfig.build || {};
-    return {
-      ...clientConfig,
-      build: {
-        ...buildConfig,
-        rollupOptions: {
-          ...buildConfig.rollupOptions,
-          external: [
-            'firebase',
-            'firebase-admin',
-            'firebase/auth',
-            'firebase/firestore',
-            'firebase/storage'
-          ]
-        }
-      }
-    };
+    return serverConfig;
   }
   return clientConfig;
 });
