@@ -24,8 +24,13 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "allowJs": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["shared/*"],
+      "@api/*": ["api/*"]
+    }
   },
-  "include": ["api/**/*", "server/**/*", "shared/**/*"],
-  "exclude": ["node_modules", "client"]
+  "include": ["api/**/*", "shared/**/*"],
+  "exclude": ["node_modules", "client", "dist"]
 } 
