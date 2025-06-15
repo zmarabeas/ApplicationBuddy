@@ -553,9 +553,12 @@ if (process.env.NODE_ENV === "development") {
     console.error("Error starting Vite server:", err);
     process.exit(1);
   });
+} else {
+  // Production server
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
 }
 
-// Start server
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+// Export the Express app for Vercel
+export default app;
