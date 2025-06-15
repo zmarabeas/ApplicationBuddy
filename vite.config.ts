@@ -27,5 +27,16 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          firebase: ['firebase', 'firebase-admin'],
+        }
+      }
+    }
   },
+  server: {
+    port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
+  }
 });

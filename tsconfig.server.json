@@ -3,8 +3,16 @@
   "compilerOptions": {
     "module": "ESNext",
     "outDir": "dist",
-    "noEmit": false,
-    "jsx": "react"
+    "noEmit": true,
+    "jsx": "react",
+    "allowJs": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "target": "ESNext"
   },
   "include": ["api/**/*"],
   "exclude": ["node_modules", "client"]
