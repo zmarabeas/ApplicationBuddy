@@ -178,6 +178,41 @@ app.get('/api/profile', authMiddleware, async (req, res) => {
   }
 });
 
+// Add PATCH endpoint for personal info
+app.patch('/api/profile/personal-info', authMiddleware, async (req, res) => {
+  try {
+    const userId = await getUserId(req);
+    if (!userId) {
+      console.error('No user ID found in request');
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    console.log('Updating personal info for user:', userId);
+    console.log('Personal info data:', req.body);
+
+    const personalInfo = personalInfoSchema.parse(req.body);
+    console.log('Parsed personal info:', personalInfo);
+
+    const updatedProfile = await storage.updateProfile(userId, {
+      personalInfo
+    });
+    console.log('Profile updated successfully:', updatedProfile);
+    
+    res.json(updatedProfile);
+  } catch (error: any) {
+    console.error('Update personal info error details:', {
+      error,
+      message: error?.message,
+      stack: error?.stack,
+      body: req.body
+    });
+    res.status(500).json({ 
+      message: "Server error",
+      details: error?.message || 'Unknown error'
+    });
+  }
+});
+
 app.put('/api/profile', authMiddleware, async (req, res) => {
   try {
     const userId = await getUserId(req);
@@ -210,8 +245,140 @@ app.put('/api/profile', authMiddleware, async (req, res) => {
   }
 });
 
+// Work Experience routes
+app.post('/api/profile/work-experiences', authMiddleware, async (req, res) => {
+  try {
+    const userId = await getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const profile = await storage.getProfile(userId);
+    if (!profile) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+
+    const workExp = workExperienceSchema.parse(req.body);
+    const updatedWorkExp = await storage.addWorkExperience(profile.id, workExp);
+    res.json(updatedWorkExp);
+  } catch (error) {
+    console.error('Add work experience error:', error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.patch('/api/profile/work-experiences/:id', authMiddleware, async (req, res) => {
+  try {
+    const userId = await getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const workExp = workExperienceSchema.parse(req.body);
+    const updatedWorkExp = await storage.updateWorkExperience(parseInt(req.params.id), workExp);
+    res.json(updatedWorkExp);
+  } catch (error) {
+    console.error('Update work experience error:', error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.delete('/api/profile/work-experiences/:id', authMiddleware, async (req, res) => {
+  try {
+    const userId = await getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const success = await storage.deleteWorkExperience(parseInt(req.params.id));
+    res.json({ success });
+  } catch (error) {
+    console.error('Delete work experience error:', error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Education routes
+app.post('/api/profile/educations', authMiddleware, async (req, res) => {
+  try {
+    const userId = await getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const profile = await storage.getProfile(userId);
+    if (!profile) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+
+    const education = educationSchema.parse(req.body);
+    const updatedEducation = await storage.addEducation(profile.id, education);
+    res.json(updatedEducation);
+  } catch (error) {
+    console.error('Add education error:', error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.patch('/api/profile/educations/:id', authMiddleware, async (req, res) => {
+  try {
+    const userId = await getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const education = educationSchema.parse(req.body);
+    const updatedEducation = await storage.updateEducation(parseInt(req.params.id), education);
+    res.json(updatedEducation);
+  } catch (error) {
+    console.error('Update education error:', error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.delete('/api/profile/educations/:id', authMiddleware, async (req, res) => {
+  try {
+    const userId = await getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const success = await storage.deleteEducation(parseInt(req.params.id));
+    res.json({ success });
+  } catch (error) {
+    console.error('Delete education error:', error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Skills route
+app.patch('/api/profile/skills', authMiddleware, async (req, res) => {
+  try {
+    const userId = await getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const profile = await storage.getProfile(userId);
+    if (!profile) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+
+    const { skills } = req.body;
+    if (!Array.isArray(skills)) {
+      return res.status(400).json({ message: "Skills must be an array" });
+    }
+
+    const updatedProfile = await storage.updateSkills(profile.id, skills);
+    res.json(updatedProfile);
+  } catch (error) {
+    console.error('Update skills error:', error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // Resume routes
-app.post('/api/resume/process', authMiddleware, async (req, res) => {
+app.post('/api/resumes/upload', authMiddleware, async (req, res) => {
   try {
     const userId = await getUserId(req);
     if (!userId) {
@@ -224,8 +391,6 @@ app.post('/api/resume/process', authMiddleware, async (req, res) => {
     }
 
     const parsedData = await processResumeFile(file, fileType);
-
-    // Save resume data
     const resume = await storage.addResume(userId, {
       content: file,
       parsedData: JSON.stringify(parsedData)
@@ -233,7 +398,120 @@ app.post('/api/resume/process', authMiddleware, async (req, res) => {
 
     res.json(resume);
   } catch (error) {
-    console.error('Process resume error:', error);
+    console.error('Upload resume error:', error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.get('/api/resumes', authMiddleware, async (req, res) => {
+  try {
+    const userId = await getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const resumes = await storage.getResumes(userId);
+    res.json(resumes);
+  } catch (error) {
+    console.error('Get resumes error:', error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.delete('/api/resumes/:id', authMiddleware, async (req, res) => {
+  try {
+    const userId = await getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const success = await storage.deleteResume(parseInt(req.params.id));
+    res.json({ success });
+  } catch (error) {
+    console.error('Delete resume error:', error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// User data export and deletion
+app.get('/api/user/export-data', authMiddleware, async (req, res) => {
+  try {
+    const userId = await getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const profile = await storage.getProfile(userId);
+    if (!profile) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+
+    const workExperiences = await storage.getWorkExperiences(profile.id);
+    const educations = await storage.getEducations(profile.id);
+    const resumes = await storage.getResumes(userId);
+    const answers = await storage.getUserAnswers(userId);
+
+    res.json({
+      profile,
+      workExperiences,
+      educations,
+      resumes,
+      answers
+    });
+  } catch (error) {
+    console.error('Export user data error:', error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.post('/api/user/delete-account', authMiddleware, async (req, res) => {
+  try {
+    const userId = await getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const profile = await storage.getProfile(userId);
+    if (profile) {
+      await storage.resetUserProfile(userId);
+    }
+
+    res.json({ message: "Account deleted successfully" });
+  } catch (error) {
+    console.error('Delete account error:', error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Profile reset
+app.post('/api/profile/reset', authMiddleware, async (req, res) => {
+  try {
+    const userId = await getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const success = await storage.resetUserProfile(userId);
+    res.json({ success });
+  } catch (error) {
+    console.error('Reset profile error:', error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// User answers
+app.post('/api/answers', authMiddleware, async (req, res) => {
+  try {
+    const userId = await getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const answer = userAnswerSchema.parse(req.body);
+    const savedAnswer = await storage.saveUserAnswer(userId, answer);
+    res.json(savedAnswer);
+  } catch (error) {
+    console.error('Save answer error:', error);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -245,23 +523,6 @@ app.get('/api/questions', authMiddleware, async (req, res) => {
     res.json(templates);
   } catch (error) {
     console.error('Get questions error:', error);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-// User answer routes
-app.post('/api/answers', authMiddleware, async (req, res) => {
-  try {
-    const userId = await getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-
-    const answerData = userAnswerSchema.parse(req.body);
-    const answer = await storage.saveUserAnswer(userId, answerData);
-    res.json(answer);
-  } catch (error) {
-    console.error('Save answer error:', error);
     res.status(500).json({ message: "Server error" });
   }
 });
