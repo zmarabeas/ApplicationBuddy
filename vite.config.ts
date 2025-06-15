@@ -84,6 +84,13 @@ const clientConfig: UserConfig = {
 
 // Server-side configuration
 const serverConfig: UserConfig = {
+  resolve: {
+    alias: {
+      "@": path.resolve(import.meta.dirname, "client", "src"),
+      "@shared": path.resolve(import.meta.dirname, "shared"),
+      "@assets": path.resolve(import.meta.dirname, "attached_assets"),
+    },
+  },
   build: {
     outDir: path.resolve(import.meta.dirname, "dist"),
     emptyOutDir: true,
@@ -111,9 +118,16 @@ const serverConfig: UserConfig = {
         '@emotion/react',
         '@emotion/styled',
         'react',
-        'react-dom'
+        'react-dom',
+        'drizzle-orm',
+        'drizzle-zod',
+        'zod',
+        'pg'
       ]
     }
+  },
+  optimizeDeps: {
+    include: ['@shared/schema']
   }
 };
 

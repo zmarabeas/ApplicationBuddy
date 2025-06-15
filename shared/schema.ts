@@ -22,7 +22,7 @@ export const profiles = pgTable("profiles", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
   personalInfo: jsonb("personal_info"),
-  skills: jsonb("skills"),
+  skills: jsonb("skills").$type<string[]>(),
   completionPercentage: integer("completion_percentage"),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
