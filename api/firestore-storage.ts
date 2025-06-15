@@ -1,5 +1,5 @@
 import admin from 'firebase-admin';
-import { IStorage } from './storage';
+import { IStorage } from './storage.ts';
 import { 
   InsertUser, User, Profile, WorkExperience, Education, Resume,
   QuestionTemplate, UserAnswer, QuestionTemplateData, UserAnswerData

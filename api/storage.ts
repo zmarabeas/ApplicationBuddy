@@ -610,7 +610,7 @@ export class DatabaseStorage implements IStorage {
 }
 
 // Use DatabaseStorage instead of MemStorage
-import { firestoreStorage } from './firestore-storage';
+import { firestoreStorage } from './firestore-storage.ts';
 
 // Use Firestore storage instead of PostgreSQL
 export const storage = firestoreStorage;

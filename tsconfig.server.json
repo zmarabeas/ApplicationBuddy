@@ -5,7 +5,7 @@
     "target": "ESNext",
     "outDir": "dist",
     "moduleResolution": "bundler",
-    "noEmit": false,
+    "noEmit": true,
     "isolatedModules": true,
     "strict": true,
     "noUnusedLocals": false,
@@ -19,7 +19,8 @@
       "@shared/*": ["./shared/*"],
       "@api/*": ["./api/*"]
     },
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": true
   },
   "include": ["api/**/*", "shared/**/*"],
   "exclude": ["node_modules", "client", "dist"]

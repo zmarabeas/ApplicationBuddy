@@ -30,6 +30,8 @@
       "@/*": ["client/src/*"],
       "@shared/*": ["shared/*"],
       "@assets/*": ["attached_assets/*"]
-    }
+    },
+    "allowImportingTsExtensions": true,
+    "noEmit": true
   }
 }

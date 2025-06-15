@@ -1,4 +1,4 @@
-import { storage } from './storage';
+import { storage } from './storage.ts';
 import { QuestionTemplateData } from '@shared/schema';
 import { z } from 'zod';
 

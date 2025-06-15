@@ -4,7 +4,7 @@ import * as os from 'os';
 import * as crypto from 'crypto';
 import multer from 'multer';
 import { Request } from 'express';
-import { parseResumeWithAI } from './openai';
+import { parseResumeWithAI } from './openai.ts';
 
 // We'll import these dynamically to avoid initialization issues
 // with pdf-parse looking for test files at startup
