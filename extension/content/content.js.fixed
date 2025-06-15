@@ -1,0 +1,1177 @@
+// JobFillr Content Script
+// This script is injected into web pages to detect and fill job application forms
+
+// Configuration
+const FORM_SELECTORS = [
+  'form', 
+  '.application-form', 
+  '#application-form',
+  '[role="form"]',
+  '[data-testid*="application"]',
+  '[class*="application"]',
+  '[class*="apply"]',
+  '[class*="job-form"]'
+];
+
+const FIELD_PATTERNS = {
+  firstName: {
+    selectors: [
+      'input[name*="first"][name*="name" i]',
+      'input[id*="first"][id*="name" i]',
+      'input[name="fname" i]',
+      'input[id="fname" i]',
+      'input[placeholder*="first name" i]',
+      'input[aria-label*="first name" i]',
+      'input[data-field*="first" i][data-field*="name" i]',
+      'input[data-input*="first" i][data-input*="name" i]',
+    ],
+    labelPatterns: [
+      /first\s*name/i,
+      /given\s*name/i,
+      /^first$/i,
+      /forename/i,
+    ]
+  },
+  lastName: {
+    selectors: [
+      'input[name*="last"][name*="name" i]',
+      'input[id*="last"][id*="name" i]',
+      'input[name="lname" i]',
+      'input[id="lname" i]',
+      'input[placeholder*="last name" i]',
+      'input[aria-label*="last name" i]',
+      'input[data-field*="last" i][data-field*="name" i]',
+      'input[data-input*="last" i][data-input*="name" i]',
+    ],
+    labelPatterns: [
+      /last\s*name/i,
+      /family\s*name/i,
+      /surname/i,
+      /^last$/i,
+    ]
+  },
+  fullName: {
+    selectors: [
+      'input[name*="full"][name*="name" i]',
+      'input[id*="full"][id*="name" i]',
+      'input[name="name" i]',
+      'input[id="name" i]',
+      'input[placeholder*="full name" i]',
+      'input[aria-label*="full name" i]',
+    ],
+    labelPatterns: [
+      /full\s*name/i,
+      /your\s*name/i,
+      /name/i,
+    ]
+  },
+  email: {
+    selectors: [
+      'input[type="email"]',
+      'input[name*="email" i]',
+      'input[id*="email" i]',
+      'input[placeholder*="email" i]',
+      'input[aria-label*="email" i]',
+    ],
+    labelPatterns: [
+      /email/i,
+      /e-mail/i,
+    ]
+  },
+  phone: {
+    selectors: [
+      'input[type="tel"]',
+      'input[name*="phone" i]',
+      'input[id*="phone" i]',
+      'input[name*="mobile" i]',
+      'input[id*="mobile" i]',
+      'input[placeholder*="phone" i]',
+      'input[aria-label*="phone" i]',
+    ],
+    labelPatterns: [
+      /phone/i,
+      /telephone/i,
+      /mobile/i,
+      /cell/i,
+    ]
+  },
+  address: {
+    selectors: [
+      'input[name*="address" i]',
+      'input[id*="address" i]',
+      'input[name*="street" i]',
+      'input[id*="street" i]',
+      'input[placeholder*="address" i]',
+      'input[aria-label*="address" i]',
+    ],
+    labelPatterns: [
+      /address/i,
+      /street/i,
+    ]
+  },
+  city: {
+    selectors: [
+      'input[name*="city" i]',
+      'input[id*="city" i]',
+      'input[placeholder*="city" i]',
+      'input[aria-label*="city" i]',
+    ],
+    labelPatterns: [
+      /city/i,
+      /town/i,
+    ]
+  },
+  state: {
+    selectors: [
+      'input[name*="state" i]',
+      'input[id*="state" i]',
+      'select[name*="state" i]',
+      'select[id*="state" i]',
+      'input[placeholder*="state" i]',
+      'input[aria-label*="state" i]',
+    ],
+    labelPatterns: [
+      /state/i,
+      /province/i,
+      /region/i,
+    ]
+  },
+  zipCode: {
+    selectors: [
+      'input[name*="zip" i]',
+      'input[id*="zip" i]',
+      'input[name*="postal" i]',
+      'input[id*="postal" i]',
+      'input[placeholder*="postal code" i]',
+      'input[placeholder*="zip code" i]',
+      'input[aria-label*="postal code" i]',
+      'input[aria-label*="zip code" i]',
+    ],
+    labelPatterns: [
+      /zip\s*code/i,
+      /postal\s*code/i,
+      /^zip$/i,
+    ]
+  },
+  country: {
+    selectors: [
+      'input[name*="country" i]',
+      'input[id*="country" i]',
+      'select[name*="country" i]',
+      'select[id*="country" i]',
+      'input[placeholder*="country" i]',
+      'input[aria-label*="country" i]',
+    ],
+    labelPatterns: [
+      /country/i,
+      /nation/i,
+    ]
+  },
+  linkedin: {
+    selectors: [
+      'input[name*="linkedin" i]',
+      'input[id*="linkedin" i]',
+      'input[placeholder*="linkedin" i]',
+      'input[aria-label*="linkedin" i]',
+    ],
+    labelPatterns: [
+      /linkedin/i,
+    ]
+  },
+  github: {
+    selectors: [
+      'input[name*="github" i]',
+      'input[id*="github" i]',
+      'input[placeholder*="github" i]',
+      'input[aria-label*="github" i]',
+    ],
+    labelPatterns: [
+      /github/i,
+    ]
+  },
+  portfolio: {
+    selectors: [
+      'input[name*="portfolio" i]',
+      'input[id*="portfolio" i]',
+      'input[name*="website" i]',
+      'input[id*="website" i]',
+      'input[placeholder*="portfolio" i]',
+      'input[placeholder*="website" i]',
+      'input[aria-label*="portfolio" i]',
+      'input[aria-label*="website" i]',
+    ],
+    labelPatterns: [
+      /portfolio/i,
+      /website/i,
+      /personal\s*site/i,
+    ]
+  },
+  currentCompany: {
+    selectors: [
+      'input[name*="current"][name*="company" i]',
+      'input[id*="current"][id*="company" i]',
+      'input[name*="company" i]',
+      'input[id*="company" i]',
+      'input[placeholder*="company" i]',
+      'input[aria-label*="company" i]',
+    ],
+    labelPatterns: [
+      /current\s*company/i,
+      /company/i,
+      /employer/i,
+    ]
+  },
+  currentPosition: {
+    selectors: [
+      'input[name*="current"][name*="position" i]',
+      'input[id*="current"][id*="position" i]',
+      'input[name*="current"][name*="title" i]',
+      'input[id*="current"][id*="title" i]',
+      'input[name*="job"][name*="title" i]',
+      'input[id*="job"][id*="title" i]',
+      'input[name*="position" i]',
+      'input[id*="position" i]',
+      'input[name*="title" i]',
+      'input[id*="title" i]',
+      'input[placeholder*="position" i]',
+      'input[placeholder*="title" i]',
+      'input[aria-label*="position" i]',
+      'input[aria-label*="title" i]',
+    ],
+    labelPatterns: [
+      /current\s*position/i,
+      /current\s*title/i,
+      /job\s*title/i,
+      /position/i,
+      /title/i,
+      /role/i,
+    ]
+  },
+  yearsOfExperience: {
+    selectors: [
+      'input[name*="years"][name*="experience" i]',
+      'input[id*="years"][id*="experience" i]',
+      'input[name*="experience" i]',
+      'input[id*="experience" i]',
+      'input[placeholder*="years of experience" i]',
+      'input[aria-label*="years of experience" i]',
+    ],
+    labelPatterns: [
+      /years\s*of\s*experience/i,
+      /experience\s*years/i,
+      /years\s*experience/i,
+    ]
+  },
+  education: {
+    selectors: [
+      'input[name*="education" i]',
+      'input[id*="education" i]',
+      'textarea[name*="education" i]',
+      'textarea[id*="education" i]',
+      'input[placeholder*="education" i]',
+      'input[aria-label*="education" i]',
+    ],
+    labelPatterns: [
+      /education/i,
+      /academic/i,
+      /highest\s*degree/i,
+    ]
+  },
+  degree: {
+    selectors: [
+      'input[name*="degree" i]',
+      'input[id*="degree" i]',
+      'select[name*="degree" i]',
+      'select[id*="degree" i]',
+      'input[placeholder*="degree" i]',
+      'input[aria-label*="degree" i]',
+    ],
+    labelPatterns: [
+      /degree/i,
+      /qualification/i,
+    ]
+  },
+  school: {
+    selectors: [
+      'input[name*="school" i]',
+      'input[id*="school" i]',
+      'input[name*="university" i]',
+      'input[id*="university" i]',
+      'input[name*="college" i]',
+      'input[id*="college" i]',
+      'input[name*="institution" i]',
+      'input[id*="institution" i]',
+      'input[placeholder*="school" i]',
+      'input[placeholder*="university" i]',
+      'input[aria-label*="school" i]',
+      'input[aria-label*="university" i]',
+    ],
+    labelPatterns: [
+      /school/i,
+      /university/i,
+      /college/i,
+      /institution/i,
+    ]
+  },
+  field: {
+    selectors: [
+      'input[name*="field" i]',
+      'input[id*="field" i]',
+      'input[name*="major" i]',
+      'input[id*="major" i]',
+      'input[placeholder*="field of study" i]',
+      'input[aria-label*="field of study" i]',
+    ],
+    labelPatterns: [
+      /field\s*of\s*study/i,
+      /major/i,
+      /field/i,
+    ]
+  },
+  skills: {
+    selectors: [
+      'input[name*="skills" i]',
+      'input[id*="skills" i]',
+      'textarea[name*="skills" i]',
+      'textarea[id*="skills" i]',
+      'input[placeholder*="skills" i]',
+      'input[aria-label*="skills" i]',
+    ],
+    labelPatterns: [
+      /skills/i,
+      /expertise/i,
+      /technologies/i,
+    ]
+  }
+};
+
+// State
+let detectedFields = [];
+let profileData = null;
+
+// Listen for messages from the extension popup
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  try {
+    if (message.action === 'scanPage') {
+      detectedFields = detectFields();
+      sendResponse({ fields: detectedFields });
+    } 
+    else if (message.action === 'fillForm') {
+      profileData = message.profileData;
+      const result = fillForm(message.fields);
+      sendResponse(result);
+    }
+  } catch (error) {
+    console.error('Content script error:', error);
+    sendResponse({ error: error.message });
+  }
+  
+  return true; // Keep the message channel open for async responses
+});
+
+// Form detection
+function detectFields() {
+  console.log('JobFillr: Scanning page for form fields...');
+  
+  try {
+    // Find all potential forms
+    const forms = [];
+    FORM_SELECTORS.forEach(selector => {
+      try {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(element => {
+          if (element && element.isConnected) {
+            forms.push(element);
+          }
+        });
+      } catch (error) {
+        console.warn(`JobFillr: Error selecting forms with selector "${selector}":`, error);
+      }
+    });
+    
+    const uniqueForms = [...new Set(forms)];
+    console.log(`JobFillr: Found ${uniqueForms.length} potential forms`);
+    
+    if (uniqueForms.length === 0) {
+      // If no forms found, scan the entire page
+      return scanForFields(document.body);
+    }
+    
+    // Scan each form
+    let allFields = [];
+    uniqueForms.forEach(form => {
+      if (form && form.isConnected) {
+        const formFields = scanForFields(form);
+        allFields = allFields.concat(formFields);
+      }
+    });
+    
+    // Filter out any fields with invalid elements before deduplicating
+    allFields = allFields.filter(field => 
+      field && field.element && field.element.isConnected && field.element.tagName
+    );
+    
+    console.log(`JobFillr: Found ${allFields.length} total fields before deduplication`);
+    
+    // Remove duplicates (same field detected multiple times)
+    const uniqueFields = [];
+    const seenElements = new Set();
+    
+    allFields.forEach(field => {
+      if (field.element && !seenElements.has(field.element)) {
+        seenElements.add(field.element);
+        uniqueFields.push(field);
+      } else if (field.element && seenElements.has(field.element)) {
+        // If we've seen this element before, keep the one with higher confidence
+        const existingField = uniqueFields.find(f => f.element === field.element);
+        if (existingField && field.confidence > existingField.confidence) {
+          existingField.fieldType = field.fieldType;
+          existingField.fieldName = field.fieldName;
+          existingField.confidence = field.confidence;
+        }
+      }
+    });
+    
+    console.log(`JobFillr: Detected ${uniqueFields.length} fields`);
+    return uniqueFields;
+  } catch (error) {
+    console.error('JobFillr: Error detecting fields:', error);
+    return [];
+  }
+}
+
+function scanForFields(container) {
+  try {
+    if (!container || !container.isConnected) {
+      console.warn('JobFillr: Cannot scan for fields - container is not valid');
+      return [];
+    }
+    
+    const detectedFields = [];
+    
+    // Scan for inputs, selects, and textareas
+    Object.entries(FIELD_PATTERNS).forEach(([fieldType, patterns]) => {
+      try {
+        // Try using CSS selectors first
+        patterns.selectors.forEach(selector => {
+          try {
+            const elements = container.querySelectorAll(selector);
+            
+            elements.forEach(element => {
+              try {
+                // Skip invalid elements
+                if (!element || !element.isConnected) {
+                  return;
+                }
+                
+                // Skip hidden or disabled elements
+                if (isElementHidden(element) || element.disabled) {
+                  return;
+                }
+                
+                // Calculate confidence based on selector specificity
+                let confidence = calculateSelectorConfidence(selector, fieldType);
+                
+                // Check if there's an associated label to improve confidence
+                try {
+                  const label = findLabelForElement(element);
+                  if (label && label.textContent) {
+                    const labelText = label.textContent.trim();
+                    const labelConfidence = calculateLabelConfidence(labelText, patterns.labelPatterns);
+                    
+                    // Use the higher confidence value
+                    confidence = Math.max(confidence, labelConfidence);
+                  }
+                } catch (labelError) {
+                  console.warn(`JobFillr: Error finding label for element:`, labelError);
+                }
+                
+                // Add the field if confidence is high enough
+                if (confidence > 0.3) {
+                  detectedFields.push({
+                    element,
+                    fieldType,
+                    fieldName: getReadableFieldName(fieldType),
+                    confidence
+                  });
+                }
+              } catch (elementError) {
+                console.warn(`JobFillr: Error processing element for "${fieldType}":`, elementError);
+              }
+            });
+          } catch (selectorError) {
+            console.warn(`JobFillr: Error querying selector "${selector}":`, selectorError);
+          }
+        });
+        
+        // If we didn't find anything with selectors, try using label patterns
+        if (!detectedFields.some(field => field.fieldType === fieldType)) {
+          try {
+            const allLabels = container.querySelectorAll('label');
+            
+            allLabels.forEach(label => {
+              try {
+                if (!label || !label.isConnected || !label.textContent) {
+                  return;
+                }
+                
+                const labelText = label.textContent.trim();
+                const confidence = calculateLabelConfidence(labelText, patterns.labelPatterns);
+                
+                if (confidence > 0.5) {
+                  // Find the associated input
+                  let input = null;
+                  try {
+                    const forAttr = label.getAttribute('for');
+                    
+                    if (forAttr) {
+                      input = document.getElementById(forAttr);
+                    } else {
+                      // Check if the label contains an input
+                      input = label.querySelector('input, select, textarea');
+                    }
+                    
+                    if (input && input.isConnected && !isElementHidden(input) && !input.disabled) {
+                      detectedFields.push({
+                        element: input,
+                        fieldType,
+                        fieldName: getReadableFieldName(fieldType),
+                        confidence
+                      });
+                    }
+                  } catch (inputError) {
+                    console.warn(`JobFillr: Error finding input for label:`, inputError);
+                  }
+                }
+              } catch (labelError) {
+                console.warn(`JobFillr: Error processing label:`, labelError);
+              }
+            });
+          } catch (labelsError) {
+            console.warn(`JobFillr: Error querying labels:`, labelsError);
+          }
+        }
+      } catch (patternError) {
+        console.warn(`JobFillr: Error processing pattern "${fieldType}":`, patternError);
+      }
+    });
+    
+    return detectedFields;
+  } catch (error) {
+    console.error('JobFillr: Error scanning for fields:', error);
+    return [];
+  }
+}
+
+// Form filling
+function fillForm(fields) {
+  if (!fields || !fields.length || !profileData) {
+    console.error('JobFillr: No fields or profile data available');
+    return { success: false, error: 'No fields or profile data available' };
+  }
+  
+  console.log('JobFillr: Filling form with profile data...', profileData);
+  
+  let filledCount = 0;
+  let skippedCount = 0;
+  let errorCount = 0;
+  let results = [];
+  
+  // Clear any previous highlights
+  document.querySelectorAll('.jobfillr-highlight').forEach(el => {
+    try {
+      el.classList.remove('jobfillr-highlight', 'jobfillr-success', 'jobfillr-error');
+      el.style.boxShadow = '';
+      el.style.outline = '';
+    } catch (e) {
+      // Ignore errors when cleaning up
+    }
+  });
+  
+  // Sort fields by confidence (high to low)
+  const sortedFields = [...fields].sort((a, b) => b.confidence - a.confidence);
+  
+  // Debug element validity for each field
+  sortedFields.forEach(field => {
+    if (field.element) {
+      console.log(`JobFillr: Field ${field.fieldName} has valid element: ${!!field.element}, tagName: ${field.element.tagName || 'N/A'}, isConnected: ${!!field.element.isConnected}`);
+    } else {
+      console.warn(`JobFillr: Field ${field.fieldName} has NO element`);
+    }
+  });
+  
+  // Fill fields in order of confidence
+  sortedFields.forEach(field => {
+    // First check if there's a value for this field type in the profile
+    const value = getValueForField(field.fieldType);
+    
+    // Log what value we found for debugging
+    console.log(`JobFillr: Field ${field.fieldName} (${field.fieldType}) value found: ${value !== null && value !== undefined ? 'Yes' : 'No'}`);
+    
+    // Check if element exists and is accessible
+    const elementValid = field.element && field.element.isConnected;
+    
+    if (!elementValid) {
+      console.warn(`JobFillr: Element for ${field.fieldName} is invalid or no longer in DOM`);
+      skippedCount++;
+      results.push({
+        fieldType: field.fieldType,
+        fieldName: field.fieldName,
+        status: 'skipped',
+        reason: 'Element not found or no longer in DOM'
+      });
+      return;
+    }
+    
+    if (!value) {
+      console.warn(`JobFillr: No profile data for ${field.fieldName}`);
+      skippedCount++;
+      results.push({
+        fieldType: field.fieldType,
+        fieldName: field.fieldName,
+        status: 'skipped',
+        reason: 'No matching data in profile'
+      });
+      return;
+    }
+    
+    try {
+      // Log the element we're about to process
+      console.log(`JobFillr: About to fill field ${field.fieldName}, element:`, field.element);
+      
+      // Scroll element into view before filling (improves chances of successful form filling)
+      try {
+        field.element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+      } catch (scrollError) {
+        console.warn(`JobFillr: Scroll error for ${field.fieldName}:`, scrollError);
+      }
+      
+      // Use a small timeout to give page a chance to react to the scroll
+      setTimeout(() => {
+        try {
+          console.log(`JobFillr: Setting value for ${field.fieldName} to:`, value);
+          const success = setElementValue(field.element, value);
+          
+          if (success) {
+            console.log(`JobFillr: Successfully filled ${field.fieldName}`);
+            highlightField(field.element, 'success');
+            filledCount++;
+            results.push({
+              fieldType: field.fieldType,
+              fieldName: field.fieldName,
+              status: 'filled',
+              value: value
+            });
+          } else {
+            console.warn(`JobFillr: Could not set value for ${field.fieldName}`);
+            highlightField(field.element, 'error');
+            skippedCount++;
+            results.push({
+              fieldType: field.fieldType,
+              fieldName: field.fieldName,
+              status: 'skipped',
+              reason: 'Could not set value'
+            });
+          }
+        } catch (delayedError) {
+          console.error(`JobFillr: Delayed error filling ${field.fieldName}:`, delayedError);
+          try {
+            highlightField(field.element, 'error');
+          } catch (highlightError) {
+            console.error('JobFillr: Error highlighting field:', highlightError);
+          }
+          errorCount++;
+          results.push({
+            fieldType: field.fieldType,
+            fieldName: field.fieldName,
+            status: 'error',
+            error: delayedError.message
+          });
+        }
+      }, 200); // Increased timeout for more reliability
+    } catch (error) {
+      console.error(`JobFillr: Error filling field ${field.fieldName}:`, error);
+      try {
+        highlightField(field.element, 'error');
+      } catch (highlightError) {
+        console.error('JobFillr: Error highlighting field:', highlightError);
+      }
+      errorCount++;
+      results.push({
+        fieldType: field.fieldType,
+        fieldName: field.fieldName,
+        status: 'error',
+        error: error.message
+      });
+    }
+  });
+  
+  console.log(`JobFillr: Filled ${filledCount} out of ${fields.length} fields (${skippedCount} skipped, ${errorCount} errors)`);
+  console.log('JobFillr: Results:', results);
+  
+  return {
+    success: true,
+    filledCount,
+    skippedCount,
+    errorCount,
+    totalFields: fields.length,
+    results
+  };
+}
+
+function getValueForField(fieldType) {
+  if (!profileData) return null;
+  
+  const personalInfo = profileData.personalInfo || {};
+  const workExperiences = profileData.workExperiences || [];
+  const educations = profileData.educations || [];
+  const skills = profileData.skills || [];
+  
+  // Get most recent work experience
+  const currentJob = workExperiences.length > 0 ? workExperiences[0] : null;
+  
+  // Get most recent education
+  const recentEducation = educations.length > 0 ? educations[0] : null;
+  
+  switch (fieldType) {
+    case 'firstName':
+      return personalInfo.firstName;
+    case 'lastName':
+      return personalInfo.lastName;
+    case 'fullName':
+      return personalInfo.firstName && personalInfo.lastName
+        ? `${personalInfo.firstName} ${personalInfo.lastName}`
+        : null;
+    case 'email':
+      return personalInfo.email;
+    case 'phone':
+      return personalInfo.phone;
+    case 'address':
+      return personalInfo.address?.street;
+    case 'city':
+      return personalInfo.address?.city;
+    case 'state':
+      return personalInfo.address?.state;
+    case 'zipCode':
+      return personalInfo.address?.zip;
+    case 'country':
+      return personalInfo.address?.country;
+    case 'linkedin':
+      return personalInfo.links?.linkedin;
+    case 'github':
+      return personalInfo.links?.github;
+    case 'portfolio':
+      return personalInfo.links?.portfolio;
+    case 'currentCompany':
+      return currentJob?.company;
+    case 'currentPosition':
+      return currentJob?.title;
+    case 'yearsOfExperience':
+      // Calculate total years of experience
+      if (workExperiences.length === 0) return null;
+      
+      let totalMonths = 0;
+      workExperiences.forEach(job => {
+        if (job.startDate) {
+          const start = new Date(job.startDate);
+          const end = job.endDate ? new Date(job.endDate) : new Date();
+          
+          // Calculate months between dates
+          totalMonths += (end.getFullYear() - start.getFullYear()) * 12 + 
+                         (end.getMonth() - start.getMonth());
+        }
+      });
+      
+      return Math.round(totalMonths / 12).toString();
+    case 'education':
+      if (!recentEducation) return null;
+      return `${recentEducation.degree || ''} in ${recentEducation.field || ''} from ${recentEducation.institution || ''}`.trim();
+    case 'degree':
+      return recentEducation?.degree;
+    case 'school':
+      return recentEducation?.institution;
+    case 'field':
+      return recentEducation?.field;
+    case 'skills':
+      return skills.join(', ');
+    default:
+      return null;
+  }
+}
+
+// Helper functions
+function calculateSelectorConfidence(selector, fieldType) {
+  // Base confidence
+  let confidence = 0.5;
+  
+  // Adjust based on selector specificity
+  if (selector.includes('type=')) {
+    confidence += 0.2; // Input types are very specific
+  }
+  
+  if (selector.includes(fieldType.toLowerCase())) {
+    confidence += 0.2; // Exact match with field type
+  }
+  
+  if (selector.includes('[name=') || selector.includes('[id=')) {
+    confidence += 0.1; // Exact attribute match
+  }
+  
+  return Math.min(confidence, 0.9); // Cap at 0.9 for selectors
+}
+
+function calculateLabelConfidence(labelText, patterns) {
+  let maxConfidence = 0;
+  
+  patterns.forEach((pattern, index) => {
+    if (pattern.test(labelText)) {
+      // First patterns are more specific, so they get higher confidence
+      const confidence = 0.5 + (0.5 / (index + 1));
+      maxConfidence = Math.max(maxConfidence, confidence);
+    }
+  });
+  
+  return maxConfidence;
+}
+
+function findLabelForElement(element) {
+  // First check for label with matching 'for' attribute
+  const id = element.id;
+  if (id) {
+    const label = document.querySelector(`label[for="${id}"]`);
+    if (label) return label;
+  }
+  
+  // Next check if element is inside a label
+  let parent = element.parentElement;
+  while (parent) {
+    if (parent.tagName.toLowerCase() === 'label') {
+      return parent;
+    }
+    parent = parent.parentElement;
+  }
+  
+  // Check sibling text nodes 
+  const previousSibling = element.previousElementSibling;
+  if (previousSibling && 
+      (previousSibling.tagName.toLowerCase() === 'label' || 
+       previousSibling.tagName.toLowerCase() === 'span' ||
+       previousSibling.tagName.toLowerCase() === 'div')) {
+    return previousSibling;
+  }
+  
+  return null;
+}
+
+function getReadableFieldName(fieldType) {
+  const fieldNames = {
+    firstName: 'First Name',
+    lastName: 'Last Name',
+    fullName: 'Full Name',
+    email: 'Email',
+    phone: 'Phone',
+    address: 'Address',
+    city: 'City',
+    state: 'State',
+    zipCode: 'Zip Code',
+    country: 'Country',
+    linkedin: 'LinkedIn',
+    github: 'GitHub',
+    portfolio: 'Portfolio',
+    currentCompany: 'Current Company',
+    currentPosition: 'Current Position',
+    yearsOfExperience: 'Years of Experience',
+    education: 'Education',
+    degree: 'Degree',
+    school: 'School',
+    field: 'Field of Study',
+    skills: 'Skills'
+  };
+  
+  return fieldNames[fieldType] || fieldType;
+}
+
+function isElementHidden(element) {
+  const style = window.getComputedStyle(element);
+  return style.display === 'none' || 
+         style.visibility === 'hidden' || 
+         style.opacity === '0' ||
+         element.offsetParent === null;
+}
+
+function setElementValue(element, value) {
+  // Safely handle the case when value is undefined or null
+  if (value === undefined || value === null) {
+    console.log('JobFillr: Skipping field - value is undefined or null');
+    return false;
+  }
+  
+  // Ensure element is valid
+  if (!element) {
+    console.error('JobFillr: Invalid element for setting value - element is null or undefined');
+    return false;
+  }
+  
+  if (!element.tagName) {
+    console.error('JobFillr: Invalid element for setting value - element has no tagName property', element);
+    return false;
+  }
+  
+  // Check if element is still connected to DOM
+  if (!element.isConnected) {
+    console.error('JobFillr: Element is no longer connected to DOM');
+    return false;
+  }
+  
+  try {
+    // Convert value to string to avoid type issues
+    const stringValue = String(value);
+    const tagName = element.tagName.toLowerCase();
+    const type = element.type ? element.type.toLowerCase() : '';
+    
+    // Add a class to mark this element as processed by JobFillr
+    element.classList.add('jobfillr-highlight');
+    
+    if (tagName === 'input') {
+      if (type === 'checkbox') {
+        // For checkboxes, check it if the value is truthy
+        const shouldCheck = ['yes', 'true', '1', 'on'].includes(stringValue.toLowerCase());
+        element.checked = shouldCheck;
+        triggerChangeEvent(element);
+        return true;
+      } 
+      else if (type === 'radio') {
+        // For radio groups, find the right option to select
+        const name = element.name;
+        if (!name) return false;
+        
+        // Get all radio buttons in the same group
+        const radioGroup = document.querySelectorAll(`input[type="radio"][name="${name}"]`);
+        
+        // Try to find the best match
+        let bestMatch = null;
+        let bestScore = 0;
+        
+        Array.from(radioGroup).forEach(radio => {
+          // Calculate match score based on various attributes
+          let score = 0;
+          
+          // Check value attribute
+          if (radio.value && radio.value.toLowerCase() === stringValue.toLowerCase()) {
+            score += 10;
+          } else if (radio.value && radio.value.toLowerCase().includes(stringValue.toLowerCase())) {
+            score += 5;
+          }
+          
+          // Check label text
+          const label = findLabelForElement(radio);
+          if (label && label.textContent) {
+            const labelText = label.textContent.trim().toLowerCase();
+            if (labelText === stringValue.toLowerCase()) {
+              score += 10;
+            } else if (labelText.includes(stringValue.toLowerCase())) {
+              score += 5;
+            }
+          }
+          
+          // Update best match if this one is better
+          if (score > bestScore) {
+            bestMatch = radio;
+            bestScore = score;
+          }
+        });
+        
+        // Select the best match if one was found
+        if (bestMatch && bestScore > 0) {
+          bestMatch.checked = true;
+          triggerChangeEvent(bestMatch);
+          return true;
+        }
+        
+        return false;
+      }
+      else if (type === 'date') {
+        // For date inputs, ensure proper format (YYYY-MM-DD)
+        try {
+          const dateObj = new Date(stringValue);
+          if (!isNaN(dateObj.getTime())) {
+            const formattedDate = dateObj.toISOString().split('T')[0];
+            element.value = formattedDate;
+            triggerInputEvent(element);
+            return true;
+          }
+        } catch (e) {
+          console.warn('Could not parse date value:', stringValue);
+        }
+        
+        // Fallback: try to set as-is
+        element.value = stringValue;
+        triggerInputEvent(element);
+        return element.value !== '';
+      }
+      else {
+        // For text, email, number, etc inputs
+        element.value = stringValue;
+        triggerInputEvent(element);
+        return element.value === stringValue; // Check if value was actually set
+      }
+    } 
+    else if (tagName === 'textarea') {
+      element.value = stringValue;
+      triggerInputEvent(element);
+      return element.value === stringValue; // Check if value was actually set
+    } 
+    else if (tagName === 'select') {
+      // Try to find an option that matches value
+      const options = Array.from(element.options);
+      let matched = false;
+      
+      // First try exact match
+      const exactMatch = options.find(option => 
+        option.value.toLowerCase() === stringValue.toLowerCase() || 
+        option.text.toLowerCase() === stringValue.toLowerCase()
+      );
+      
+      if (exactMatch) {
+        element.value = exactMatch.value;
+        matched = true;
+      } else {
+        // Try contains match
+        const containsMatch = options.find(option => 
+          option.value.toLowerCase().includes(stringValue.toLowerCase()) || 
+          option.text.toLowerCase().includes(stringValue.toLowerCase())
+        );
+        
+        if (containsMatch) {
+          element.value = containsMatch.value;
+          matched = true;
+        }
+      }
+      
+      if (matched) {
+        triggerChangeEvent(element);
+        return true;
+      }
+      
+      return false;
+    }
+    
+    // Default: we don't know how to handle this element type
+    return false;
+  } catch (error) {
+    console.error('JobFillr: Error setting element value:', error);
+    return false;
+  }
+}
+
+function triggerInputEvent(element) {
+  const inputEvent = new Event('input', { bubbles: true });
+  element.dispatchEvent(inputEvent);
+  
+  const changeEvent = new Event('change', { bubbles: true });
+  element.dispatchEvent(changeEvent);
+}
+
+function triggerChangeEvent(element) {
+  const changeEvent = new Event('change', { bubbles: true });
+  element.dispatchEvent(changeEvent);
+}
+
+function highlightField(element, type) {
+  // Safety check for valid element
+  if (!element) {
+    console.error('JobFillr: Cannot highlight invalid element - element is null or undefined');
+    return;
+  }
+  
+  if (!element.isConnected) {
+    console.error('JobFillr: Cannot highlight element - it is no longer connected to DOM');
+    return;
+  }
+  
+  if (!element.style) {
+    console.error('JobFillr: Cannot highlight element - element has no style property', element);
+    return;
+  }
+  
+  try {
+    // Save original styles
+    const originalOutline = element.style.outline;
+    const originalBoxShadow = element.style.boxShadow;
+    
+    // Mark as highlighted by JobFillr
+    element.classList.add('jobfillr-highlight');
+    
+    // Add type-specific class
+    if (type === 'success') {
+      element.classList.add('jobfillr-success');
+      element.style.outline = '2px solid #10b981';
+      element.style.boxShadow = '0 0 0 4px rgba(16, 185, 129, 0.2)';
+    } else {
+      element.classList.add('jobfillr-error');
+      element.style.outline = '2px solid #ef4444';
+      element.style.boxShadow = '0 0 0 4px rgba(239, 68, 68, 0.2)';
+    }
+    
+    // Make element visible if it's offscreen
+    try {
+      if (element.getBoundingClientRect().top < 0 || 
+          element.getBoundingClientRect().bottom > window.innerHeight) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    } catch (e) {
+      // Ignore scroll errors
+    }
+    
+    // Make highlight fade after some time
+    setTimeout(() => {
+      try {
+        // Check if element is still in the DOM
+        if (element && element.isConnected) {
+          // Fade out the highlight rather than removing it completely
+          element.style.transition = 'outline 0.5s, box-shadow 0.5s';
+          element.style.outline = originalOutline || 'none';
+          element.style.boxShadow = originalBoxShadow || 'none';
+        }
+      } catch (e) {
+        console.warn('JobFillr: Could not reset element style', e);
+      }
+    }, 2000); // Longer duration for better visibility
+  } catch (error) {
+    console.error('JobFillr: Error highlighting field:', error);
+  }
+}
+
+// Initial page scan when the script is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('JobFillr: Content script loaded');
+  
+  // Listen for dynamic form loading
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+        // Check if any added node contains a form or input fields
+        for (let i = 0; i < mutation.addedNodes.length; i++) {
+          const node = mutation.addedNodes[i];
+          if (node.nodeType === 1) { // ELEMENT_NODE
+            if (
+              node.tagName === 'FORM' || 
+              node.querySelector('form, input, select, textarea')
+            ) {
+              console.log('JobFillr: Detected dynamically loaded form');
+              // We don't run detection here, but we could notify the user
+              // that they should scan the page again
+            }
+          }
+        }
+      }
+    });
+  });
+  
+  // Start observing the document body for form loading
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+});
+console.log('JobFillr: Content script loaded and ready.');

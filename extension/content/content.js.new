@@ -1,0 +1,1560 @@
+// JobFillr Content Script
+// This script is injected into web pages to detect and fill job application forms
+
+// Configuration
+const FORM_SELECTORS = [
+  'form', 
+  '.application-form',
+  '.job-application',
+  '[role="form"]',
+  '.careers-form',
+  '#application-form',
+  '#job-form',
+  '#resume-form',
+  '#apply-form',
+  'form[action*="apply"]',
+  'form[action*="job"]',
+  'form[action*="career"]'
+];
+
+// Field patterns with selectors and label text recognition patterns
+const FIELD_PATTERNS = {
+  'firstName': {
+    selectors: [
+      'input[name*="first_name" i]',
+      'input[name*="firstname" i]',
+      'input[name*="fname" i]',
+      'input[id*="first_name" i]',
+      'input[id*="firstname" i]',
+      'input[id*="fname" i]',
+      'input[placeholder*="first name" i]',
+      'input[aria-label*="first name" i]'
+    ],
+    labelPatterns: [
+      'first name',
+      'given name',
+      'first'
+    ]
+  },
+  'lastName': {
+    selectors: [
+      'input[name*="last_name" i]',
+      'input[name*="lastname" i]',
+      'input[name*="lname" i]',
+      'input[id*="last_name" i]',
+      'input[id*="lastname" i]',
+      'input[id*="lname" i]',
+      'input[placeholder*="last name" i]',
+      'input[aria-label*="last name" i]'
+    ],
+    labelPatterns: [
+      'last name',
+      'surname',
+      'family name',
+      'last'
+    ]
+  },
+  'fullName': {
+    selectors: [
+      'input[name*="fullname" i]',
+      'input[name*="full_name" i]',
+      'input[name*="name" i]',
+      'input[id*="fullname" i]',
+      'input[id*="full_name" i]',
+      'input[id*="name" i]:not([id*="first" i]):not([id*="last" i]):not([id*="user" i]):not([id*="file" i])',
+      'input[placeholder*="full name" i]',
+      'input[aria-label*="name" i]:not([aria-label*="first" i]):not([aria-label*="last" i]):not([aria-label*="user" i])'
+    ],
+    labelPatterns: [
+      'full name',
+      'name',
+      'complete name'
+    ]
+  },
+  'email': {
+    selectors: [
+      'input[type="email"]',
+      'input[name*="email" i]',
+      'input[id*="email" i]',
+      'input[placeholder*="email" i]',
+      'input[aria-label*="email" i]'
+    ],
+    labelPatterns: [
+      'email',
+      'e-mail',
+      'email address'
+    ]
+  },
+  'phone': {
+    selectors: [
+      'input[type="tel"]',
+      'input[name*="phone" i]',
+      'input[name*="mobile" i]',
+      'input[name*="cell" i]',
+      'input[id*="phone" i]',
+      'input[id*="mobile" i]',
+      'input[id*="cell" i]',
+      'input[placeholder*="phone" i]',
+      'input[placeholder*="mobile" i]',
+      'input[aria-label*="phone" i]',
+      'input[aria-label*="mobile" i]'
+    ],
+    labelPatterns: [
+      'phone',
+      'telephone',
+      'mobile',
+      'cell',
+      'phone number',
+      'contact number'
+    ]
+  },
+  'address': {
+    selectors: [
+      'input[name*="address" i]',
+      'input[name*="street" i]',
+      'input[id*="address" i]',
+      'input[id*="street" i]',
+      'input[placeholder*="address" i]',
+      'input[placeholder*="street" i]',
+      'input[aria-label*="address" i]',
+      'input[aria-label*="street" i]',
+      'textarea[name*="address" i]',
+      'textarea[id*="address" i]'
+    ],
+    labelPatterns: [
+      'address',
+      'street address',
+      'mailing address',
+      'street',
+      'address line'
+    ]
+  },
+  'city': {
+    selectors: [
+      'input[name*="city" i]',
+      'input[id*="city" i]',
+      'input[placeholder*="city" i]',
+      'input[aria-label*="city" i]'
+    ],
+    labelPatterns: [
+      'city',
+      'town',
+      'locality'
+    ]
+  },
+  'state': {
+    selectors: [
+      'select[name*="state" i]',
+      'select[id*="state" i]',
+      'select[name*="province" i]',
+      'select[id*="province" i]',
+      'input[name*="state" i]',
+      'input[id*="state" i]',
+      'input[placeholder*="state" i]',
+      'input[aria-label*="state" i]',
+      'input[name*="province" i]',
+      'input[id*="province" i]'
+    ],
+    labelPatterns: [
+      'state',
+      'province',
+      'region'
+    ]
+  },
+  'zip': {
+    selectors: [
+      'input[name*="zip" i]',
+      'input[id*="zip" i]',
+      'input[name*="postal" i]',
+      'input[id*="postal" i]',
+      'input[placeholder*="zip" i]',
+      'input[placeholder*="postal" i]',
+      'input[aria-label*="zip" i]',
+      'input[aria-label*="postal" i]'
+    ],
+    labelPatterns: [
+      'zip',
+      'zipcode',
+      'postal code',
+      'postal',
+      'zip code'
+    ]
+  },
+  'country': {
+    selectors: [
+      'select[name*="country" i]',
+      'select[id*="country" i]',
+      'input[name*="country" i]',
+      'input[id*="country" i]',
+      'input[placeholder*="country" i]',
+      'input[aria-label*="country" i]'
+    ],
+    labelPatterns: [
+      'country',
+      'nation'
+    ]
+  },
+  'dateOfBirth': {
+    selectors: [
+      'input[type="date"][name*="birth" i]',
+      'input[type="date"][id*="birth" i]',
+      'input[name*="birthdate" i]',
+      'input[name*="birth_date" i]',
+      'input[name*="date_of_birth" i]',
+      'input[id*="birthdate" i]',
+      'input[id*="birth_date" i]',
+      'input[id*="date_of_birth" i]',
+      'input[placeholder*="birth date" i]',
+      'input[placeholder*="date of birth" i]',
+      'input[aria-label*="birth date" i]',
+      'input[aria-label*="date of birth" i]'
+    ],
+    labelPatterns: [
+      'birthdate',
+      'birth date',
+      'date of birth',
+      'born'
+    ]
+  },
+  'linkedin': {
+    selectors: [
+      'input[name*="linkedin" i]',
+      'input[id*="linkedin" i]',
+      'input[placeholder*="linkedin" i]',
+      'input[aria-label*="linkedin" i]'
+    ],
+    labelPatterns: [
+      'linkedin',
+      'linkedin profile',
+      'linkedin url'
+    ]
+  },
+  'portfolio': {
+    selectors: [
+      'input[name*="portfolio" i]',
+      'input[id*="portfolio" i]',
+      'input[name*="website" i]',
+      'input[id*="website" i]',
+      'input[placeholder*="portfolio" i]',
+      'input[placeholder*="website" i]',
+      'input[aria-label*="portfolio" i]',
+      'input[aria-label*="website" i]'
+    ],
+    labelPatterns: [
+      'portfolio',
+      'portfolio url',
+      'website',
+      'personal website',
+      'blog'
+    ]
+  },
+  'jobTitle': {
+    selectors: [
+      'input[name*="job_title" i]',
+      'input[name*="jobtitle" i]',
+      'input[name*="position" i]',
+      'input[id*="job_title" i]',
+      'input[id*="jobtitle" i]',
+      'input[id*="position" i]',
+      'input[placeholder*="job title" i]',
+      'input[placeholder*="position" i]',
+      'input[aria-label*="job title" i]',
+      'input[aria-label*="position" i]'
+    ],
+    labelPatterns: [
+      'job title',
+      'position',
+      'title',
+      'current job',
+      'role'
+    ]
+  },
+  'company': {
+    selectors: [
+      'input[name*="company" i]',
+      'input[name*="employer" i]',
+      'input[id*="company" i]',
+      'input[id*="employer" i]',
+      'input[placeholder*="company" i]',
+      'input[placeholder*="employer" i]',
+      'input[aria-label*="company" i]',
+      'input[aria-label*="employer" i]'
+    ],
+    labelPatterns: [
+      'company',
+      'employer',
+      'organization',
+      'workplace',
+      'business'
+    ]
+  },
+  'education': {
+    selectors: [
+      'input[name*="education" i]',
+      'input[name*="degree" i]',
+      'input[id*="education" i]',
+      'input[id*="degree" i]',
+      'input[placeholder*="education" i]',
+      'input[placeholder*="degree" i]',
+      'input[aria-label*="education" i]',
+      'input[aria-label*="degree" i]',
+      'select[name*="education" i]',
+      'select[name*="degree" i]',
+      'select[id*="education" i]',
+      'select[id*="degree" i]'
+    ],
+    labelPatterns: [
+      'education',
+      'degree',
+      'qualification',
+      'highest education',
+      'educational background'
+    ]
+  },
+  'degree': {
+    selectors: [
+      'input[name*="degree" i][name*="type" i]',
+      'input[id*="degree" i][id*="type" i]',
+      'select[name*="degree" i][name*="type" i]',
+      'select[id*="degree" i][id*="type" i]',
+      'input[placeholder*="degree type" i]',
+      'input[aria-label*="degree type" i]'
+    ],
+    labelPatterns: [
+      'degree type',
+      'type of degree',
+      'degree'
+    ]
+  },
+  'school': {
+    selectors: [
+      'input[name*="school" i]',
+      'input[name*="college" i]',
+      'input[name*="university" i]',
+      'input[id*="school" i]',
+      'input[id*="college" i]',
+      'input[id*="university" i]',
+      'input[placeholder*="school" i]',
+      'input[placeholder*="college" i]',
+      'input[placeholder*="university" i]',
+      'input[aria-label*="school" i]',
+      'input[aria-label*="college" i]',
+      'input[aria-label*="university" i]'
+    ],
+    labelPatterns: [
+      'school',
+      'university',
+      'college',
+      'institution',
+      'academic institution'
+    ]
+  },
+  'graduationYear': {
+    selectors: [
+      'input[name*="grad" i][name*="year" i]',
+      'input[id*="grad" i][id*="year" i]',
+      'input[name*="graduation" i][name*="year" i]',
+      'input[id*="graduation" i][id*="year" i]',
+      'select[name*="grad" i][name*="year" i]',
+      'select[id*="grad" i][id*="year" i]',
+      'select[name*="graduation" i][name*="year" i]',
+      'select[id*="graduation" i][id*="year" i]',
+      'input[placeholder*="graduation year" i]',
+      'input[aria-label*="graduation year" i]'
+    ],
+    labelPatterns: [
+      'graduation year',
+      'year of graduation',
+      'graduated',
+      'completion year',
+      'year completed'
+    ]
+  },
+  'skills': {
+    selectors: [
+      'textarea[name*="skill" i]',
+      'textarea[id*="skill" i]',
+      'input[name*="skill" i]',
+      'input[id*="skill" i]',
+      'input[placeholder*="skill" i]',
+      'input[aria-label*="skill" i]'
+    ],
+    labelPatterns: [
+      'skills',
+      'abilities',
+      'competencies',
+      'technical skills',
+      'key skills'
+    ]
+  },
+  'yearsOfExperience': {
+    selectors: [
+      'input[name*="years" i][name*="experience" i]',
+      'input[id*="years" i][id*="experience" i]',
+      'select[name*="years" i][name*="experience" i]',
+      'select[id*="years" i][id*="experience" i]',
+      'input[placeholder*="years of experience" i]',
+      'input[aria-label*="years of experience" i]'
+    ],
+    labelPatterns: [
+      'years of experience',
+      'experience years',
+      'years experience',
+      'work experience years'
+    ]
+  },
+  'coverLetter': {
+    selectors: [
+      'textarea[name*="cover" i]',
+      'textarea[name*="letter" i]',
+      'textarea[id*="cover" i]',
+      'textarea[id*="letter" i]',
+      'textarea[placeholder*="cover letter" i]',
+      'textarea[aria-label*="cover letter" i]'
+    ],
+    labelPatterns: [
+      'cover letter',
+      'covering letter',
+      'letter of application',
+      'introduction'
+    ]
+  }
+};
+
+// State
+let detectedFields = [];
+let profileData = null;
+
+// Store element references as JSON-serializable data
+let serializedFields = [];
+
+// Check if we're in a browser extension context
+const isBrowserExtension = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage;
+
+// Listen for messages from the extension popup (only in extension context)
+if (isBrowserExtension) {
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  try {
+    if (message.action === 'scanPage') {
+      // First detect fields
+      detectedFields = detectFields();
+      
+      // Then create a serializable version without DOM elements
+      serializedFields = detectedFields.map(field => {
+        // Store element selector info instead of the DOM element
+        let selector = '';
+        
+        try {
+          // Generate a unique selector for this element
+          if (field.element.id) {
+            selector = `#${field.element.id}`;
+          } else if (field.element.name) {
+            selector = `[name="${field.element.name}"]`;
+          } else {
+            // Try to create a path or unique selector
+            const tagName = field.element.tagName.toLowerCase();
+            selector = `${tagName}[data-jobfillr="field-${field.fieldType}"]`;
+            
+            // Mark the element so we can find it later
+            field.element.setAttribute('data-jobfillr', `field-${field.fieldType}`);
+          }
+        } catch (e) {
+          console.warn('JobFillr: Failed to create selector for element', e);
+        }
+        
+        return {
+          fieldType: field.fieldType,
+          fieldName: field.fieldName,
+          confidence: field.confidence,
+          selector: selector
+        };
+      });
+      
+      sendResponse({ fields: serializedFields });
+    } 
+    else if (message.action === 'fillForm') {
+      profileData = message.profileData;
+      
+      // Redetect fields to get fresh DOM references
+      detectedFields = detectFields();
+      
+      // Match serialized fields with fresh DOM elements
+      const fieldsToFill = message.fields.map(serializedField => {
+        // First try to find a matching field in our fresh detection
+        const matchedField = detectedFields.find(f => f.fieldType === serializedField.fieldType);
+        
+        if (matchedField && matchedField.element && matchedField.element.isConnected) {
+          return matchedField;
+        }
+        
+        // If not found, try to query by the saved selector
+        if (serializedField.selector) {
+          try {
+            const element = document.querySelector(serializedField.selector);
+            if (element && element.isConnected) {
+              return {
+                element,
+                fieldType: serializedField.fieldType,
+                fieldName: serializedField.fieldName,
+                confidence: serializedField.confidence
+              };
+            }
+          } catch (e) {
+            console.warn(`JobFillr: Could not find element with selector ${serializedField.selector}`, e);
+          }
+        }
+        
+        // Return the original serialized field but with a flag to skip it
+        return {
+          ...serializedField,
+          element: null,
+          skip: true
+        };
+      });
+      
+      // Only fill fields that have valid elements
+      const validFields = fieldsToFill.filter(f => !f.skip);
+      
+      // Log the valid vs. total fields 
+      console.log(`JobFillr: Found ${validFields.length} valid fields out of ${fieldsToFill.length} total fields`);
+      
+      const result = fillForm(validFields);
+      sendResponse(result);
+    }
+  } catch (error) {
+    console.error('Content script error:', error);
+    sendResponse({ error: error.message });
+  }
+  
+  return true; // Keep the message channel open for async responses
+});
+}
+
+// Form detection
+function detectFields() {
+  console.log('JobFillr: Scanning page for form fields...');
+  
+  try {
+    // Find all potential forms
+    const forms = [];
+    FORM_SELECTORS.forEach(selector => {
+      try {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(element => {
+          if (element && element.isConnected) {
+            forms.push(element);
+          }
+        });
+      } catch (error) {
+        console.warn(`JobFillr: Error selecting forms with selector "${selector}":`, error);
+      }
+    });
+    
+    const uniqueForms = [...new Set(forms)];
+    console.log(`JobFillr: Found ${uniqueForms.length} potential forms`);
+    
+    if (uniqueForms.length === 0) {
+      // If no forms found, scan the entire page
+      return scanForFields(document.body);
+    }
+    
+    // Scan each form
+    let allFields = [];
+    uniqueForms.forEach(form => {
+      if (form && form.isConnected) {
+        const formFields = scanForFields(form);
+        allFields = allFields.concat(formFields);
+      }
+    });
+    
+    // Filter out any fields with invalid elements before deduplicating
+    allFields = allFields.filter(field => 
+      field && field.element && field.element.isConnected && field.element.tagName
+    );
+    
+    console.log(`JobFillr: Found ${allFields.length} total fields before deduplication`);
+    
+    // Remove duplicates (same field detected multiple times)
+    const uniqueFields = [];
+    const seenElements = new Set();
+    
+    allFields.forEach(field => {
+      if (field.element && !seenElements.has(field.element)) {
+        seenElements.add(field.element);
+        uniqueFields.push(field);
+      } else if (field.element && seenElements.has(field.element)) {
+        // If we've seen this element before, keep the one with higher confidence
+        const existingField = uniqueFields.find(f => f.element === field.element);
+        if (existingField && field.confidence > existingField.confidence) {
+          existingField.fieldType = field.fieldType;
+          existingField.fieldName = field.fieldName;
+          existingField.confidence = field.confidence;
+        }
+      }
+    });
+    
+    console.log(`JobFillr: Detected ${uniqueFields.length} fields`);
+    return uniqueFields;
+  } catch (error) {
+    console.error('JobFillr: Error detecting fields:', error);
+    return [];
+  }
+}
+
+function scanForFields(container) {
+  try {
+    if (!container || !container.isConnected) {
+      console.warn('JobFillr: Cannot scan for fields - container is not valid');
+      return [];
+    }
+    
+    const detectedFields = [];
+    
+    // Scan for inputs, selects, and textareas
+    Object.entries(FIELD_PATTERNS).forEach(([fieldType, patterns]) => {
+      try {
+        // Try using CSS selectors first
+        patterns.selectors.forEach(selector => {
+          try {
+            const elements = container.querySelectorAll(selector);
+            
+            elements.forEach(element => {
+              try {
+                // Skip invalid elements
+                if (!element || !element.isConnected) {
+                  return;
+                }
+                
+                // Skip hidden or disabled elements
+                if (isElementHidden(element) || element.disabled) {
+                  return;
+                }
+                
+                // Calculate confidence based on selector specificity
+                let confidence = calculateSelectorConfidence(selector, fieldType);
+                
+                // Check if there's an associated label to improve confidence
+                try {
+                  const label = findLabelForElement(element);
+                  if (label && label.textContent) {
+                    const labelText = label.textContent.trim();
+                    const labelConfidence = calculateLabelConfidence(labelText, patterns.labelPatterns);
+                    
+                    // Use the higher confidence value
+                    confidence = Math.max(confidence, labelConfidence);
+                  }
+                } catch (labelError) {
+                  console.warn(`JobFillr: Error finding label for element:`, labelError);
+                }
+                
+                // Add the field if confidence is high enough
+                if (confidence > 0.3) {
+                  detectedFields.push({
+                    element,
+                    fieldType,
+                    fieldName: getReadableFieldName(fieldType),
+                    confidence
+                  });
+                }
+              } catch (elementError) {
+                console.warn(`JobFillr: Error processing element for "${fieldType}":`, elementError);
+              }
+            });
+          } catch (selectorError) {
+            console.warn(`JobFillr: Error querying selector "${selector}":`, selectorError);
+          }
+        });
+        
+        // If we didn't find anything with selectors, try using label patterns
+        if (!detectedFields.some(field => field.fieldType === fieldType)) {
+          try {
+            const allLabels = container.querySelectorAll('label');
+            
+            allLabels.forEach(label => {
+              try {
+                if (!label || !label.isConnected || !label.textContent) {
+                  return;
+                }
+                
+                const labelText = label.textContent.trim();
+                const confidence = calculateLabelConfidence(labelText, patterns.labelPatterns);
+                
+                if (confidence > 0.5) {
+                  // Find the associated input
+                  let input = null;
+                  try {
+                    const forAttr = label.getAttribute('for');
+                    
+                    if (forAttr) {
+                      input = document.getElementById(forAttr);
+                    } else {
+                      // Check if the label contains an input
+                      input = label.querySelector('input, select, textarea');
+                    }
+                    
+                    if (input && input.isConnected && !isElementHidden(input) && !input.disabled) {
+                      detectedFields.push({
+                        element: input,
+                        fieldType,
+                        fieldName: getReadableFieldName(fieldType),
+                        confidence
+                      });
+                    }
+                  } catch (inputError) {
+                    console.warn(`JobFillr: Error finding input for label:`, inputError);
+                  }
+                }
+              } catch (labelError) {
+                console.warn(`JobFillr: Error processing label:`, labelError);
+              }
+            });
+          } catch (labelsError) {
+            console.warn(`JobFillr: Error querying labels:`, labelsError);
+          }
+        }
+      } catch (patternError) {
+        console.warn(`JobFillr: Error processing pattern "${fieldType}":`, patternError);
+      }
+    });
+    
+    return detectedFields;
+  } catch (error) {
+    console.error('JobFillr: Error scanning for fields:', error);
+    return [];
+  }
+}
+
+// Form filling
+function fillForm(fields) {
+  if (!fields || !fields.length || !profileData) {
+    console.error('JobFillr: No fields or profile data available');
+    return { success: false, error: 'No fields or profile data available' };
+  }
+  
+  console.log('JobFillr: Filling form with profile data...', profileData);
+  
+  let filledCount = 0;
+  let skippedCount = 0;
+  let errorCount = 0;
+  
+  // Refresh element references before filling
+  const refreshedFields = fields.map(field => {
+    // First check if there's already a valid element reference
+    if (field.element && field.element.isConnected) {
+      return field;
+    }
+    
+    // If not, try to find it using the selector
+    if (field.selector) {
+      try {
+        const element = document.querySelector(field.selector);
+        if (element && element.isConnected) {
+          return {
+            ...field,
+            element
+          };
+        }
+      } catch (e) {
+        console.warn(`JobFillr: Error finding element with selector ${field.selector}:`, e);
+      }
+    }
+    
+    // If we get here, we couldn't find the element
+    return {
+      ...field,
+      element: null
+    };
+  });
+  
+  // Use refreshed fields instead of original fields
+  fields = refreshedFields;
+  let results = [];
+  
+  // Clear any previous highlights
+  document.querySelectorAll('.jobfillr-highlight').forEach(el => {
+    try {
+      el.classList.remove('jobfillr-highlight', 'jobfillr-success', 'jobfillr-error');
+      el.style.boxShadow = '';
+      el.style.outline = '';
+    } catch (e) {
+      // Ignore errors when cleaning up
+    }
+  });
+  
+  // Sort fields by confidence (high to low)
+  const sortedFields = [...fields].sort((a, b) => b.confidence - a.confidence);
+  
+  // Debug element validity for each field
+  sortedFields.forEach(field => {
+    if (field.element) {
+      console.log(`JobFillr: Field ${field.fieldName} has valid element: ${!!field.element}, tagName: ${field.element.tagName || 'N/A'}, isConnected: ${!!field.element.isConnected}`);
+    } else {
+      console.warn(`JobFillr: Field ${field.fieldName} has NO element`);
+    }
+  });
+  
+  // Fill fields in order of confidence
+  sortedFields.forEach(field => {
+    // First check if there's a value for this field type in the profile
+    const value = getValueForField(field.fieldType);
+    
+    // Log what value we found for debugging
+    console.log(`JobFillr: Field ${field.fieldName} (${field.fieldType}) value found: ${value !== null && value !== undefined ? 'Yes' : 'No'}`);
+    
+    // Check if element exists and is accessible
+    const elementValid = field.element && field.element.isConnected;
+    
+    if (!elementValid) {
+      console.warn(`JobFillr: Element for ${field.fieldName} is invalid or no longer in DOM`);
+      skippedCount++;
+      results.push({
+        fieldType: field.fieldType,
+        fieldName: field.fieldName,
+        status: 'skipped',
+        reason: 'Element not found or no longer in DOM'
+      });
+      return;
+    }
+    
+    if (!value) {
+      console.warn(`JobFillr: No profile data for ${field.fieldName}`);
+      skippedCount++;
+      results.push({
+        fieldType: field.fieldType,
+        fieldName: field.fieldName,
+        status: 'skipped',
+        reason: 'No matching data in profile'
+      });
+      return;
+    }
+    
+    try {
+      // Log the element we're about to process
+      console.log(`JobFillr: About to fill field ${field.fieldName}, element:`, field.element);
+      
+      // Scroll element into view before filling (improves chances of successful form filling)
+      try {
+        field.element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+      } catch (scrollError) {
+        console.warn(`JobFillr: Scroll error for ${field.fieldName}:`, scrollError);
+      }
+      
+      // Use a small timeout to give page a chance to react to the scroll
+      setTimeout(() => {
+        try {
+          console.log(`JobFillr: Setting value for ${field.fieldName} to:`, value);
+          const success = setElementValue(field.element, value, field.fieldType);
+          
+          if (success) {
+            console.log(`JobFillr: Successfully filled ${field.fieldName}`);
+            highlightField(field.element, 'success');
+            filledCount++;
+            results.push({
+              fieldType: field.fieldType,
+              fieldName: field.fieldName,
+              status: 'filled',
+              value: value
+            });
+          } else {
+            console.warn(`JobFillr: Could not fill ${field.fieldName}`);
+            highlightField(field.element, 'error');
+            errorCount++;
+            results.push({
+              fieldType: field.fieldType,
+              fieldName: field.fieldName,
+              status: 'error',
+              reason: 'Could not set value'
+            });
+          }
+        } catch (e) {
+          console.error(`JobFillr: Error filling ${field.fieldName}:`, e);
+          errorCount++;
+          results.push({
+            fieldType: field.fieldType,
+            fieldName: field.fieldName,
+            status: 'error',
+            reason: e.message
+          });
+        }
+      }, 100);
+    } catch (fieldError) {
+      console.error(`JobFillr: Critical error processing ${field.fieldName}:`, fieldError);
+      errorCount++;
+      results.push({
+        fieldType: field.fieldType,
+        fieldName: field.fieldName,
+        status: 'error',
+        reason: fieldError.message
+      });
+    }
+  });
+  
+  // Return summary stats and detailed results
+  return {
+    success: true,
+    stats: {
+      filled: filledCount,
+      skipped: skippedCount,
+      errors: errorCount,
+      total: fields.length
+    },
+    results: results
+  };
+}
+
+// Helper function to set value based on element type
+function setElementValue(element, value, fieldType) {
+  try {
+    if (!element || !element.isConnected) {
+      return false;
+    }
+    
+    // Get element type
+    const tagName = element.tagName.toLowerCase();
+    const inputType = element.type ? element.type.toLowerCase() : '';
+    
+    console.log(`JobFillr: Setting value for ${tagName} element with type ${inputType}`);
+    
+    // Handle different input types
+    if (tagName === 'select') {
+      // Use the selection handler from field-handlers.js if available
+      if (window.JobFillrHandlers && window.JobFillrHandlers.SelectionHandler) {
+        return window.JobFillrHandlers.SelectionHandler.selectOption(value, element);
+      } else {
+        // Fallback if specialized handler not available
+        return selectOption(element, value);
+      }
+    } 
+    else if (tagName === 'textarea') {
+      element.value = value;
+      triggerInputEvent(element);
+      triggerChangeEvent(element);
+      return true;
+    }
+    else if (tagName === 'input') {
+      // Handle different input types
+      if (inputType === 'checkbox' || inputType === 'radio') {
+        // Use the selection handler from field-handlers.js if available
+        if (window.JobFillrHandlers && window.JobFillrHandlers.SelectionHandler) {
+          return window.JobFillrHandlers.SelectionHandler.setCheckedState(value, element);
+        } else {
+          // Fallback if specialized handler not available
+          element.checked = !!value;
+          triggerChangeEvent(element);
+          return true;
+        }
+      }
+      else if (inputType === 'date') {
+        // Use the date handler from field-handlers.js if available
+        if (window.JobFillrHandlers && window.JobFillrHandlers.DateHandler) {
+          const formattedDate = window.JobFillrHandlers.DateHandler.formatDate(value, element);
+          element.value = formattedDate;
+        } else {
+          // Fallback to ISO format
+          try {
+            // Parse the input date value
+            const date = new Date(value);
+            if (!isNaN(date.getTime())) {
+              // Format as YYYY-MM-DD for HTML date inputs
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              element.value = `${year}-${month}-${day}`;
+            } else {
+              element.value = value; // Fall back to raw value
+            }
+          } catch (e) {
+            element.value = value; // Fall back to raw value
+          }
+        }
+        triggerInputEvent(element);
+        triggerChangeEvent(element);
+        return true;
+      }
+      else if (inputType === 'tel' && window.JobFillrHandlers && window.JobFillrHandlers.PhoneHandler) {
+        // Use the phone handler from field-handlers.js if available
+        const formattedPhone = window.JobFillrHandlers.PhoneHandler.formatPhone(value, element);
+        element.value = formattedPhone;
+        triggerInputEvent(element);
+        triggerChangeEvent(element);
+        return true;
+      }
+      else if (fieldType === 'zip' && window.JobFillrHandlers && window.JobFillrHandlers.AddressHandler) {
+        // Use the address handler from field-handlers.js if available
+        const formattedZip = window.JobFillrHandlers.AddressHandler.formatPostalCode(value, element);
+        element.value = formattedZip;
+        triggerInputEvent(element);
+        triggerChangeEvent(element);
+        return true;
+      }
+      else if (fieldType === 'state' && window.JobFillrHandlers && window.JobFillrHandlers.AddressHandler) {
+        // Use the address handler from field-handlers.js if available
+        const formattedState = window.JobFillrHandlers.AddressHandler.formatState(value, element);
+        element.value = formattedState;
+        triggerInputEvent(element);
+        triggerChangeEvent(element);
+        return true;
+      }
+      else {
+        // Default for other input types (text, email, etc.)
+        element.value = value;
+        triggerInputEvent(element);
+        triggerChangeEvent(element);
+        return true;
+      }
+    }
+    
+    return false; // Unsupported element type
+  } catch (error) {
+    console.error('JobFillr: Error setting element value:', error);
+    return false;
+  }
+}
+
+// Fallback function to select an option in a dropdown
+function selectOption(selectElement, value) {
+  if (!selectElement || selectElement.tagName.toLowerCase() !== 'select') {
+    return false;
+  }
+  
+  // Try to find the option by value, text or partial match
+  const options = Array.from(selectElement.options);
+  let foundOption = null;
+  
+  // Check for exact value match
+  foundOption = options.find(option => option.value === value);
+  
+  // If not found, check for exact text match
+  if (!foundOption) {
+    foundOption = options.find(option => option.text === value);
+  }
+  
+  // If still not found, try case-insensitive text match
+  if (!foundOption && typeof value === 'string') {
+    const lowerValue = value.toLowerCase();
+    foundOption = options.find(option => option.text.toLowerCase() === lowerValue);
+  }
+  
+  // If still not found, try partial match
+  if (!foundOption && typeof value === 'string') {
+    const lowerValue = value.toLowerCase();
+    foundOption = options.find(option => 
+      option.text.toLowerCase().includes(lowerValue) ||
+      lowerValue.includes(option.text.toLowerCase())
+    );
+  }
+  
+  // If found, select it
+  if (foundOption) {
+    selectElement.value = foundOption.value;
+    triggerChangeEvent(selectElement);
+    return true;
+  }
+  
+  return false;
+}
+
+// Helper function to get value for field from profile data
+function getValueForField(fieldType) {
+  if (!profileData) {
+    return null;
+  }
+  
+  // Get personal info from profile
+  const personalInfo = profileData.personalInfo || {};
+  
+  // Get most recent work experience (if any)
+  const workExperiences = profileData.workExperiences || [];
+  const recentWork = workExperiences.length > 0 ? workExperiences[0] : null;
+  
+  // Get most recent education (if any)
+  const educations = profileData.educations || [];
+  const recentEducation = educations.length > 0 ? educations[0] : null;
+  
+  // Map field types to profile data
+  switch (fieldType) {
+    case 'firstName':
+      return personalInfo.firstName;
+    case 'lastName':
+      return personalInfo.lastName;
+    case 'fullName':
+      if (personalInfo.firstName && personalInfo.lastName) {
+        return `${personalInfo.firstName} ${personalInfo.lastName}`;
+      }
+      return personalInfo.fullName;
+    case 'email':
+      return personalInfo.email;
+    case 'phone':
+      return personalInfo.phone;
+    case 'address':
+      return personalInfo.address;
+    case 'city':
+      return personalInfo.city;
+    case 'state':
+      return personalInfo.state;
+    case 'zip':
+      return personalInfo.postalCode;
+    case 'country':
+      return personalInfo.country;
+    case 'dateOfBirth':
+      return personalInfo.dateOfBirth;
+    case 'linkedin':
+      return personalInfo.linkedin;
+    case 'portfolio':
+      return personalInfo.website;
+    case 'jobTitle':
+      return recentWork?.title;
+    case 'company':
+      return recentWork?.company;
+    case 'education':
+      if (recentEducation?.degree && recentEducation?.institution) {
+        return `${recentEducation.degree}, ${recentEducation.institution}`;
+      }
+      return recentEducation?.degree || recentEducation?.institution;
+    case 'degree':
+      return recentEducation?.degree;
+    case 'school':
+      return recentEducation?.institution;
+    case 'graduationYear':
+      if (recentEducation?.endDate) {
+        // Try to extract year from endDate
+        try {
+          // First check if it's just a year
+          if (/^\d{4}$/.test(recentEducation.endDate)) {
+            return recentEducation.endDate;
+          }
+          // Otherwise try to parse as a date
+          const date = new Date(recentEducation.endDate);
+          if (!isNaN(date.getTime())) {
+            return date.getFullYear().toString();
+          }
+        } catch (e) {
+          console.warn('JobFillr: Error parsing graduation year:', e);
+        }
+      }
+      return null;
+    case 'skills':
+      if (profileData.skills && profileData.skills.length > 0) {
+        return profileData.skills.join(', ');
+      }
+      return null;
+    case 'yearsOfExperience':
+      if (workExperiences && workExperiences.length > 0) {
+        // Count total years across all work experiences
+        let totalMonths = 0;
+        workExperiences.forEach(exp => {
+          try {
+            if (exp.startDate && (exp.endDate || exp.current)) {
+              const startDate = new Date(exp.startDate);
+              const endDate = exp.current ? new Date() : new Date(exp.endDate);
+              
+              if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+                // Calculate difference in months
+                const months = (endDate.getFullYear() - startDate.getFullYear()) * 12 + 
+                              (endDate.getMonth() - startDate.getMonth());
+                totalMonths += months;
+              }
+            }
+          } catch (e) {
+            console.warn('JobFillr: Error calculating experience duration:', e);
+          }
+        });
+        
+        // Convert months to years, rounded to nearest 0.5
+        const years = Math.round((totalMonths / 12) * 2) / 2;
+        return years.toString();
+      }
+      return null;
+    case 'coverLetter':
+      return personalInfo.summary || personalInfo.objective || null;
+    default:
+      return null;
+  }
+}
+
+// Helper function to calculate confidence for a selector
+function calculateSelectorConfidence(selector, fieldType) {
+  // Base confidence - very type-specific selectors get higher confidence
+  let confidence = 0.5;
+  
+  // Boost confidence for highly specific selectors
+  if (selector.includes(`[name="${fieldType}"]`) || 
+      selector.includes(`[id="${fieldType}"]`) ||
+      selector.includes(`[placeholder="${fieldType}"]`)) {
+    confidence = 0.9;
+  }
+  else if (selector.includes(`[name*="${fieldType}"]`) || 
+          selector.includes(`[id*="${fieldType}"]`) ||
+          selector.includes(`[placeholder*="${fieldType}"]`)) {
+    confidence = 0.75;
+  }
+  
+  // Type-specific boosts
+  if (selector.includes('type="email"') && fieldType === 'email') {
+    confidence = 0.95;
+  }
+  else if (selector.includes('type="tel"') && fieldType === 'phone') {
+    confidence = 0.95;
+  }
+  else if (selector.includes('type="date"') && (fieldType.includes('date') || fieldType.includes('birth'))) {
+    confidence = 0.95;
+  }
+  
+  return confidence;
+}
+
+// Helper function to calculate confidence based on label text match
+function calculateLabelConfidence(labelText, patterns) {
+  if (!labelText || !patterns || patterns.length === 0) {
+    return 0;
+  }
+  
+  // Normalize label text for comparison
+  const normalizedLabel = labelText.toLowerCase().trim();
+  
+  // Check for exact matches first
+  for (const pattern of patterns) {
+    if (normalizedLabel === pattern.toLowerCase()) {
+      return 0.95; // Very high confidence for exact match
+    }
+  }
+  
+  // Then check for contains matches
+  for (const pattern of patterns) {
+    if (normalizedLabel.includes(pattern.toLowerCase())) {
+      return 0.8; // High confidence for contains match
+    }
+  }
+  
+  // Check if any pattern is included in the label
+  for (const pattern of patterns) {
+    if (pattern.toLowerCase().includes(normalizedLabel)) {
+      return 0.6; // Medium confidence for partial match
+    }
+  }
+  
+  // Check for word boundary matches (to avoid substring false positives)
+  for (const pattern of patterns) {
+    const patternWords = pattern.toLowerCase().split(/\s+/);
+    for (const word of patternWords) {
+      if (word.length > 3 && normalizedLabel.includes(word)) {
+        return 0.5; // Lower confidence for word match
+      }
+    }
+  }
+  
+  return 0; // No match
+}
+
+// Helper function to find label element for a form element
+function findLabelForElement(element) {
+  if (!element || !element.isConnected) {
+    return null;
+  }
+  
+  // First try to find a label with a 'for' attribute matching this element's ID
+  if (element.id) {
+    const label = document.querySelector(`label[for="${element.id}"]`);
+    if (label) {
+      return label;
+    }
+  }
+  
+  // Then check if the element is inside a label
+  let parent = element.parentElement;
+  while (parent) {
+    if (parent.tagName && parent.tagName.toLowerCase() === 'label') {
+      return parent;
+    }
+    parent = parent.parentElement;
+  }
+  
+  // Finally, look for labels or text immediately before this element
+  // This is less reliable but catches common patterns
+  try {
+    // Get all text nodes and labels preceding this element
+    const prevSibling = element.previousElementSibling;
+    if (prevSibling) {
+      if (prevSibling.tagName && prevSibling.tagName.toLowerCase() === 'label') {
+        return prevSibling;
+      }
+      
+      // Check if there's text content that might be a label
+      if (prevSibling.textContent && prevSibling.textContent.trim()) {
+        // Create a virtual label-like object with the text content
+        return { textContent: prevSibling.textContent };
+      }
+    }
+    
+    // Check parent siblings for potential label text (common in many layouts)
+    if (element.parentElement && element.parentElement.previousElementSibling) {
+      const parentPrevSibling = element.parentElement.previousElementSibling;
+      if (parentPrevSibling.tagName && 
+          (parentPrevSibling.tagName.toLowerCase() === 'label' || 
+           parentPrevSibling.tagName.toLowerCase() === 'div' ||
+           parentPrevSibling.tagName.toLowerCase() === 'span')) {
+        return parentPrevSibling;
+      }
+    }
+  } catch (e) {
+    console.warn('JobFillr: Error finding label through siblings:', e);
+  }
+  
+  return null;
+}
+
+// Helper function to get a human-readable field name
+function getReadableFieldName(fieldType) {
+  const readableNames = {
+    'firstName': 'First Name',
+    'lastName': 'Last Name',
+    'fullName': 'Full Name',
+    'email': 'Email Address',
+    'phone': 'Phone Number',
+    'address': 'Street Address',
+    'city': 'City',
+    'state': 'State/Province',
+    'zip': 'ZIP/Postal Code',
+    'country': 'Country',
+    'dateOfBirth': 'Date of Birth',
+    'linkedin': 'LinkedIn Profile',
+    'portfolio': 'Portfolio/Website',
+    'jobTitle': 'Job Title',
+    'company': 'Company',
+    'education': 'Education',
+    'degree': 'Degree',
+    'school': 'School/University',
+    'graduationYear': 'Graduation Year',
+    'skills': 'Skills',
+    'yearsOfExperience': 'Years of Experience',
+    'coverLetter': 'Cover Letter'
+  };
+  
+  return readableNames[fieldType] || fieldType;
+}
+
+// Helper function to check if an element is hidden
+function isElementHidden(element) {
+  if (!element || !element.isConnected) {
+    return true;
+  }
+  
+  // Check computed style
+  const style = window.getComputedStyle(element);
+  if (style.display === 'none' || style.visibility === 'hidden' || parseFloat(style.opacity) === 0) {
+    return true;
+  }
+  
+  // Check dimensions - consider elements with no size as hidden
+  const rect = element.getBoundingClientRect();
+  if (rect.width === 0 || rect.height === 0) {
+    return true;
+  }
+  
+  // Check if element is outside viewport (could be in a hidden tab/section)
+  const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+  
+  // Allow some margin for partially visible elements
+  if (rect.right < -100 || rect.bottom < -100 || rect.left > viewportWidth + 100 || rect.top > viewportHeight + 100) {
+    // This is only a heuristic - the element might be scrolled into view later
+    // Treat this as a lower confidence, not a definite hidden state
+    // return true;
+  }
+  
+  // Check parents for hidden state
+  let parent = element.parentElement;
+  while (parent && parent !== document.body) {
+    const parentStyle = window.getComputedStyle(parent);
+    if (parentStyle.display === 'none' || parentStyle.visibility === 'hidden' || parseFloat(parentStyle.opacity) === 0) {
+      return true;
+    }
+    parent = parent.parentElement;
+  }
+  
+  return false;
+}
+
+// Helper function to trigger an input event
+function triggerInputEvent(element) {
+  if (!element || !element.isConnected) {
+    return;
+  }
+  
+  try {
+    const inputEvent = new Event('input', { bubbles: true });
+    element.dispatchEvent(inputEvent);
+  } catch (e) {
+    // Fallback for older browsers
+    try {
+      const inputEvent = document.createEvent('HTMLEvents');
+      inputEvent.initEvent('input', true, true);
+      element.dispatchEvent(inputEvent);
+    } catch (e2) {
+      console.warn('JobFillr: Could not trigger input event:', e2);
+    }
+  }
+}
+
+// Helper function to trigger a change event
+function triggerChangeEvent(element) {
+  if (!element || !element.isConnected) {
+    return;
+  }
+  
+  try {
+    const changeEvent = new Event('change', { bubbles: true });
+    element.dispatchEvent(changeEvent);
+  } catch (e) {
+    // Fallback for older browsers
+    try {
+      const changeEvent = document.createEvent('HTMLEvents');
+      changeEvent.initEvent('change', true, true);
+      element.dispatchEvent(changeEvent);
+    } catch (e2) {
+      console.warn('JobFillr: Could not trigger change event:', e2);
+    }
+  }
+}
+
+// Helper function to highlight fields for visual feedback
+function highlightField(element, type) {
+  try {
+    if (!element || !element.isConnected) {
+      return;
+    }
+    
+    // Add class for styling
+    element.classList.add('jobfillr-highlight');
+    
+    // Add success or error class
+    if (type === 'success') {
+      element.classList.add('jobfillr-success');
+      element.style.boxShadow = '0 0 5px 2px rgba(0, 255, 0, 0.5)';
+      element.style.outline = '2px solid green';
+    } else {
+      element.classList.add('jobfillr-error');
+      element.style.boxShadow = '0 0 5px 2px rgba(255, 0, 0, 0.5)';
+      element.style.outline = '2px solid red';
+    }
+    
+    // Remove highlighting after a delay
+    setTimeout(() => {
+      try {
+        if (element && element.isConnected) {
+          element.classList.remove('jobfillr-highlight', 'jobfillr-success', 'jobfillr-error');
+          element.style.boxShadow = '';
+          element.style.outline = '';
+        }
+      } catch (e) {
+        console.warn('JobFillr: Error removing highlight:', e);
+      }
+    }, 2000); // Longer duration for better visibility
+  } catch (error) {
+    console.warn('JobFillr: Error highlighting field:', error);
+  }
+}
+
+// Function to notify the extension popup about detected forms
+function notifyFormDetection(formCount) {
+  // Only send message if in a browser extension context
+  if (isBrowserExtension) {
+    chrome.runtime.sendMessage({
+      action: 'formsDetected',
+      formCount: formCount,
+      location: window.location.href
+    }, response => {
+      // Optional callback if needed
+      if (response && response.received) {
+        console.log('JobFillr: Notification about form detection was received by extension');
+      }
+    });
+  } else {
+    console.log('JobFillr: Found ' + formCount + ' form fields (not in extension context)');
+  }
+}
+
+// Function to scan page and notify results
+function scanAndNotify() {
+  try {
+    // Wait a moment for the page to finish loading dynamic content
+    setTimeout(() => {
+      detectedFields = detectFields();
+      if (detectedFields && detectedFields.length > 0) {
+        console.log(`JobFillr: Auto-detected ${detectedFields.length} fields in the page`);
+        notifyFormDetection(detectedFields.length);
+      }
+    }, 1000);
+  } catch (error) {
+    console.error('JobFillr: Error in automatic form detection:', error);
+  }
+}
+
+// Function to determine if we're on a file:// URL
+function isLocalFile() {
+  return window.location.protocol === 'file:';
+}
+
+// Initial page scan when the script is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('JobFillr: Content script loaded, DOM content loaded');
+  
+  // Special handling for local file URLs
+  if (isLocalFile()) {
+    console.log('JobFillr: Local file detected, will use more aggressive detection');
+    
+    // For local files, we need to be more aggressive with detection
+    // since the DOM might not trigger events properly
+    scanAndNotify();
+    
+    // Also set up a backup timer to re-scan periodically
+    setInterval(scanAndNotify, 5000);
+  }
+  
+  // Listen for dynamic form loading
+  const observer = new MutationObserver((mutations) => {
+    let formDetected = false;
+    
+    mutations.forEach((mutation) => {
+      if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+        // Check if any added node contains a form or input fields
+        for (let i = 0; i < mutation.addedNodes.length; i++) {
+          const node = mutation.addedNodes[i];
+          if (node.nodeType === 1) { // ELEMENT_NODE
+            if (
+              node.tagName === 'FORM' || 
+              node.querySelector('form, input, select, textarea')
+            ) {
+              console.log('JobFillr: Detected dynamically loaded form');
+              formDetected = true;
+              
+              // Don't break, keep looking for more forms
+            }
+          }
+        }
+      }
+    });
+    
+    // If we detected forms, re-scan the page
+    if (formDetected) {
+      scanAndNotify();
+    }
+  });
+  
+  // Start observing the document body for form loading
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+  
+  // Run initial scan
+  scanAndNotify();
+});
+
+// Backup detection on window load - sometimes needed for SPA or heavily scripted pages
+window.addEventListener('load', () => {
+  console.log('JobFillr: Window fully loaded, rescanning');
+  scanAndNotify();
+});
+
+console.log('JobFillr: Content script loaded and ready.');

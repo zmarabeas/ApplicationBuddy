@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  
+  /* Always use dark mode */
+  --background: 230 20% 5%;  /* Much darker background */
+  --foreground: 210 40% 98%;
+  --card: 230 25% 8%;        /* Darker card */
+  --card-foreground: 210 40% 98%;
+  --popover: 230 25% 8%;     /* Match card color */
+  --popover-foreground: 210 40% 98%;
+  --primary: 210 100% 60%;
+  --primary-foreground: 222 47% 11.2%;
+  --secondary: 217 54% 15%;  /* Darker secondary */
+  --secondary-foreground: 210 40% 98%;
+  --muted: 230 25% 10%;      /* Darker muted */
+  --muted-foreground: 217.9 32.6% 70%;
+  --accent: 220 70% 50%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 230 25% 12%;     /* Darker border */
+  --input: 230 25% 10%;      /* Darker input */
+  --ring: 210 100% 60%;
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-mono antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-mono font-bold tracking-tighter;
+  }
+  
+  .code-glow {
+    @apply shadow-[0_0_20px_rgba(76,136,254,0.6)];
+  }
+  
+  /* Add neon text effect for primary text highlights */
+  .neon-text {
+    @apply text-primary;
+    text-shadow: 0 0 5px rgba(76,136,254,0.7), 0 0 10px rgba(76,136,254,0.5);
+  }
+  
+  /* Add subtle background grid pattern */
+  .grid-pattern {
+    background-image: 
+      linear-gradient(rgba(76, 136, 254, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(76, 136, 254, 0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+}
+
