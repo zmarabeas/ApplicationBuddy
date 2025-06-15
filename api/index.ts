@@ -6,14 +6,41 @@ import { initializeApp, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
-import { registerRoutes } from './routes';
-import { db } from './db';
-import { seedTemplates } from './seed-templates';
+import { storage } from './storage';
 import { processResumeFile } from './resumeProcessor';
 import { parseResumeWithAI } from './openai';
-import { storage } from './storage';
+import { seedTemplates } from './seed-templates';
+import { db } from './db';
 import { createViteServer } from './vite';
 import type { ViteDevServer } from 'vite';
+import type { Express, Request, Response } from 'express';
+import type { DecodedIdToken } from 'firebase-admin/auth';
+import { 
+  personalInfoSchema, 
+  workExperienceSchema, 
+  educationSchema,
+  profileSchema,
+  questionTemplateSchema,
+  userAnswerSchema,
+  QuestionTemplate,
+  UserAnswer,
+  QuestionTemplateData,
+  UserAnswerData
+} from '@shared/schema';
+
+// Extend Express Request type to include user
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id?: number;
+        uid: string;
+        email: string;
+        firebaseUser: DecodedIdToken;
+      };
+    }
+  }
+}
 
 // Initialize Firebase Admin
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '{}');
@@ -41,7 +68,7 @@ app.use(cors());
 app.use(express.json());
 
 // Auth middleware
-const authMiddleware = async (req: any, res: any, next: any) => {
+const authMiddleware = async (req: Request, res: Response, next: Function) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
@@ -50,7 +77,11 @@ const authMiddleware = async (req: any, res: any, next: any) => {
 
     const token = authHeader.split('Bearer ')[1];
     const decodedToken = await getAuth().verifyIdToken(token);
-    req.user = decodedToken;
+    req.user = {
+      uid: decodedToken.uid,
+      email: decodedToken.email || '',
+      firebaseUser: decodedToken
+    };
     next();
   } catch (error) {
     console.error('Auth error:', error);
@@ -58,13 +89,168 @@ const authMiddleware = async (req: any, res: any, next: any) => {
   }
 };
 
-// Setup development mode
+// Helper function to get user ID from Firebase UID
+const getUserId = async (req: Request): Promise<number | null> => {
+  if (req.user?.uid) {
+    let dbUser = await storage.getUserByFirebaseUID(req.user.uid);
+    
+    if (!dbUser) {
+      console.log(`Auto-creating new user for Firebase UID: ${req.user.uid}`);
+      dbUser = await storage.createUser({
+        email: req.user.email,
+        username: req.user.email,
+        displayName: req.user.firebaseUser.name || req.user.email.split('@')[0],
+        password: null,
+        firebaseUID: req.user.uid,
+        photoURL: req.user.firebaseUser.picture || null,
+        authProvider: 'firebase'
+      });
+      
+      await storage.createProfile(dbUser.id);
+      console.log(`Created user ID ${dbUser.id} and profile for Firebase user ${req.user.uid}`);
+    }
+    
+    return dbUser?.id || null;
+  }
+  return null;
+};
+
+// API Routes
+
+// User routes
+app.get('/api/user', authMiddleware, async (req, res) => {
+  try {
+    if (req.user?.uid) {
+      let dbUser = await storage.getUserByFirebaseUID(req.user.uid);
+      
+      if (!dbUser) {
+        console.log(`Creating new user for Firebase UID: ${req.user.uid}`);
+        dbUser = await storage.createUser({
+          email: req.user.email,
+          username: req.user.email,
+          displayName: req.user.firebaseUser.name || req.user.email.split('@')[0],
+          password: null,
+          firebaseUID: req.user.uid,
+          photoURL: req.user.firebaseUser.picture || null,
+          authProvider: 'firebase'
+        });
+        
+        await storage.createProfile(dbUser.id);
+      }
+      
+      return res.json({
+        id: dbUser.id,
+        email: dbUser.email,
+        displayName: dbUser.displayName,
+        photoURL: dbUser.photoURL
+      });
+    }
+    
+    return res.status(401).json({ message: "Not authenticated" });
+  } catch (error) {
+    console.error('Get user error:', error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Profile routes
+app.get('/api/profile', authMiddleware, async (req, res) => {
+  try {
+    const userId = await getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const profile = await storage.getProfile(userId);
+    if (!profile) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+
+    res.json(profile);
+  } catch (error) {
+    console.error('Get profile error:', error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.put('/api/profile', authMiddleware, async (req, res) => {
+  try {
+    const userId = await getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const profileData = profileSchema.parse(req.body);
+    const updatedProfile = await storage.updateProfile(userId, profileData);
+    res.json(updatedProfile);
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Resume routes
+app.post('/api/resume/process', authMiddleware, async (req, res) => {
+  try {
+    const userId = await getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const { file, fileType } = req.body;
+    if (!file || !fileType) {
+      return res.status(400).json({ message: "No file or file type provided" });
+    }
+
+    const parsedData = await processResumeFile(file, fileType);
+
+    // Save resume data
+    const resume = await storage.addResume(userId, {
+      content: file,
+      parsedData: JSON.stringify(parsedData)
+    });
+
+    res.json(resume);
+  } catch (error) {
+    console.error('Process resume error:', error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Question template routes
+app.get('/api/questions', authMiddleware, async (req, res) => {
+  try {
+    const templates = await storage.getQuestionTemplates();
+    res.json(templates);
+  } catch (error) {
+    console.error('Get questions error:', error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// User answer routes
+app.post('/api/answers', authMiddleware, async (req, res) => {
+  try {
+    const userId = await getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const answerData = userAnswerSchema.parse(req.body);
+    const answer = await storage.saveUserAnswer(userId, answerData);
+    res.json(answer);
+  } catch (error) {
+    console.error('Save answer error:', error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Development mode setup
 async function setupDevMode() {
   if (process.env.NODE_ENV === 'development') {
     const vite = await createViteServer();
     app.use(vite.middlewares);
 
-    // Development mode SPA handling
     app.use('*', async (req, res) => {
       try {
         const url = req.originalUrl;
@@ -84,8 +270,8 @@ async function setupDevMode() {
 
 // Initialize the application
 async function init() {
-  // Setup routes
-  await registerRoutes(app);
+  // Seed templates if needed
+  await seedTemplates();
 
   // Setup development mode if needed
   await setupDevMode();

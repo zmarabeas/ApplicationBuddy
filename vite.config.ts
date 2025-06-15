@@ -30,7 +30,23 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom']
+          'react-vendor': ['react', 'react-dom'],
+          'ui-components': [
+            '@mui/material',
+            '@mui/icons-material',
+            '@emotion/react',
+            '@emotion/styled'
+          ],
+          'form-components': [
+            'react-hook-form',
+            '@hookform/resolvers',
+            'zod'
+          ],
+          'utils': [
+            'date-fns',
+            'lodash',
+            'uuid'
+          ]
         }
       },
       external: [
@@ -40,10 +56,31 @@ export default defineConfig({
         'firebase/firestore',
         'firebase/storage'
       ]
+    },
+    chunkSizeWarningLimit: 500,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true
+      }
     }
   },
   optimizeDeps: {
-    include: ['react', 'react-dom'],
+    include: [
+      'react',
+      'react-dom',
+      '@mui/material',
+      '@mui/icons-material',
+      '@emotion/react',
+      '@emotion/styled',
+      'react-hook-form',
+      '@hookform/resolvers',
+      'zod',
+      'date-fns',
+      'lodash',
+      'uuid'
+    ],
     exclude: ['firebase', 'firebase-admin']
   },
   server: {
