@@ -12,8 +12,12 @@
       "dest": "/api/index.ts"
     },
     {
+      "src": "/assets/(.*)",
+      "dest": "/dist/public/assets/$1"
+    },
+    {
       "src": "/(.*)",
-      "dest": "/dist/$1"
+      "dest": "/dist/public/index.html"
     }
   ],
   "env": {
