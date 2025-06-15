@@ -1,9 +1,9 @@
 import admin from 'firebase-admin';
-import { IStorage } from './storage.ts';
+import { IStorage } from './storage.js';
 import { 
   InsertUser, User, Profile, WorkExperience, Education, Resume,
   QuestionTemplate, UserAnswer, QuestionTemplateData, UserAnswerData
-} from '../shared/schema.ts';
+} from '../shared/schema.js';
 
 // Initialize Firebase Admin if not already initialized
 if (!admin.apps.length) {

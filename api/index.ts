@@ -6,12 +6,12 @@ import { initializeApp, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
-import { storage } from './storage/index.ts';
-import { processResumeFile } from './resumeProcessor.ts';
-import { parseResumeWithAI } from './openai.ts';
-import { seedTemplates } from './seed-templates.ts';
-import { db } from './db.ts';
-import { createViteServer } from './vite.ts';
+import { storage } from './storage/index.js';
+import { processResumeFile } from './resumeProcessor.js';
+import { parseResumeWithAI } from './openai.js';
+import { seedTemplates } from './seed-templates.js';
+import { db } from './db.js';
+import { createViteServer } from './vite.js';
 import type { ViteDevServer } from 'vite';
 import type { Express, Request, Response } from 'express';
 import type { DecodedIdToken } from 'firebase-admin/auth';
@@ -26,7 +26,7 @@ import {
   UserAnswer,
   QuestionTemplateData,
   UserAnswerData
-} from '../shared/schema.ts';
+} from '../shared/schema.js';
 import session from 'express-session';
 
 // Extend Express Request type to include user
