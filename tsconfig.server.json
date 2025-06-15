@@ -18,7 +18,8 @@
     "paths": {
       "@shared/*": ["./shared/*"],
       "@api/*": ["./api/*"]
-    }
+    },
+    "esModuleInterop": true
   },
   "include": ["api/**/*", "shared/**/*"],
   "exclude": ["node_modules", "client", "dist"]
