@@ -1,113 +1,102 @@
-import express, { type Request, Response, NextFunction } from "express";
-import session from "express-session";
-import connectPgSimple from "connect-pg-simple";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
-import { pool } from "./db";
-import "./types"; // Import session types
-import { seedDatabaseIfEmpty } from "./seed-templates"; // Import seed function
+import express from 'express';
+import cors from 'cors';
+import { rateLimit } from 'express-rate-limit';
+import { auth } from 'firebase-admin';
+import { initializeApp, cert } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
+import { registerRoutes } from './routes';
+import { db } from './db';
+import { seedTemplates } from './seed-templates';
+import { processResumeFile } from './resumeProcessor';
+import { parseResumeWithAI } from './openai';
+import { storage } from './storage';
+import { createViteServer } from './vite';
+import type { ViteDevServer } from 'vite';
 
+// Initialize Firebase Admin
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '{}');
+initializeApp({
+  credential: cert(serviceAccount),
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET
+});
+
+// Create Express app
 const app = express();
+const port = process.env.PORT || 3000;
 
-// Enable trust proxy to properly handle client IPs behind proxies (needed for rate limiting)
-app.set('trust proxy', 1);
+// Rate limiting configuration
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.'
+});
 
+// Apply rate limiting to all routes
+app.use(limiter);
+
+// Middleware
+app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
-// Set up session storage
-const PgSession = connectPgSimple(session);
-app.use(session({
-  store: new PgSession({
-    pool,
-    tableName: 'session',
-    createTableIfMissing: true
-  }),
-  secret: process.env.SESSION_SECRET || 'applicationbuddy-dev-secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-  }
-}));
-
-// Debug middleware to log all requests and headers
-app.use((req, res, next) => {
-  if (req.path.startsWith('/api')) {
-    console.log('\n=== REQUEST DETAILS ===');
-    console.log(`${req.method} ${req.path}`);
-    console.log('Headers:');
-    Object.entries(req.headers).forEach(([key, value]) => {
-      console.log(`  ${key}: ${value}`);
-    });
-    console.log('======================\n');
-  }
-  next();
-});
-
-app.use((req, res, next) => {
-  const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
+// Auth middleware
+const authMiddleware = async (req: any, res: any, next: any) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No token provided' });
     }
-  });
 
-  next();
-});
-
-(async () => {
-  // Seed the database with question templates if needed
-  await seedDatabaseIfEmpty();
-  
-  const server = await registerRoutes(app);
-
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
-
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
+    const token = authHeader.split('Bearer ')[1];
+    const decodedToken = await getAuth().verifyIdToken(token);
+    req.user = decodedToken;
+    next();
+  } catch (error) {
+    console.error('Auth error:', error);
+    res.status(401).json({ error: 'Invalid token' });
   }
+};
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
+// Setup development mode
+async function setupDevMode() {
+  if (process.env.NODE_ENV === 'development') {
+    const vite = await createViteServer();
+    app.use(vite.middlewares);
+
+    // Development mode SPA handling
+    app.use('*', async (req, res) => {
+      try {
+        const url = req.originalUrl;
+        const template = await vite.transformIndexHtml(url, '');
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+      } catch (e: any) {
+        vite.ssrFixStacktrace(e);
+        console.error(e);
+        res.status(500).end(e.message);
+      }
+    });
+
+    return vite;
+  }
+  return null;
+}
+
+// Initialize the application
+async function init() {
+  // Setup routes
+  await registerRoutes(app);
+
+  // Setup development mode if needed
+  await setupDevMode();
+
+  // Start server
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
   });
-})();
+}
+
+// Start the application
+init().catch(console.error);
+
+export { app };
