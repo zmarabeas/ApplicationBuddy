@@ -1,63 +1,8 @@
 # Cursor Rules: AI Agent Protocol for Quality Code
 
 ## MANDATORY: Think Before Acting
-1. **STOP** - Read the full request and understand the actual problem
-2. **ANALYZE** - What is the minimal solution? Can we avoid coding entirely?
-3. **PLAN** - Write out your approach in steps before writing any code
-4. **VALIDATE** - Does your plan solve the real problem, not just the stated request?
 
-## Code Generation Protocol
-
-### Phase 1: Problem Analysis
-- Identify the core human need (not just technical requirements)
-- Question if the feature/complexity is necessary
-- Check existing codebase for similar patterns before creating new ones
-- Explicitly state your understanding before proceeding
-
-### Phase 2: Solution Design  
-- Choose the simplest approach that works
-- Prefer composition over inheritance
-- Use existing patterns and libraries over custom solutions
-- Design for humans who will read/maintain the code
-
-### Phase 3: Implementation
-- Write self-documenting code with clear variable names
-- Keep functions under 40 lines with single responsibility
-- Handle errors explicitly with helpful messages
-- Add only necessary comments explaining "why"
-
-### Phase 4: Validation
-- Review your code against the original problem
-- Check for edge cases and error conditions
-- Verify it follows established patterns in the codebase
-- Ask: "Can any of this be removed or simplified?"
-
-## ANTI-HALLUCINATION RULES
-- Never assume APIs, methods, or libraries exist without verification
-- When uncertain about syntax/features, explicitly state assumptions
-- Prefer well-documented, standard approaches over experimental ones
-- If you don't know something, say so and suggest research/testing
-
-## ERROR PREVENTION
-- Always include error handling for external calls
-- Validate inputs at function boundaries
-- Use TypeScript/type hints when available
-- Write tests that cover the happy path and common failures
-
-## OPTIMIZATION MINDSET
-- Solve the immediate need first, then optimize if measured performance issues exist
-- Favor readability over premature optimization
-- Use established patterns over novel approaches
-- Question every dependency and abstraction
-
-## COMPLETION CHECKLIST
-Before marking task complete:
-- [ ] Code solves the stated problem
-- [ ] Solution is as simple as possible
-- [ ] Error cases are handled
-- [ ] Code is readable and maintainable
-- [ ] No unnecessary complexity added
-
----
-
-*Execute systematically. Think explicitly. Code deliberately. Optimize ruthlessly.*
+write good code or you go to jail
+don't hallucinate
+if something takes more than a couple tries, reevaluate or ask a question
+don't go in loops

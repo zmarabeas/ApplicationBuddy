@@ -1,13 +1,17 @@
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
-import { createServer } from 'vite';
+import { createServer } from "vite";
 import { type Server } from "http";
 import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
 import type { ServerOptions, HmrOptions } from 'vite';
+import { createLogger } from "vite";
+import { fileURLToPath } from "url";
+import { dirname, resolve } from "path";
 
 const viteLogger = createLogger();
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -20,18 +24,32 @@ export function log(message: string, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 
-export async function createViteServer(options: ServerOptions = {}) {
-  return createServer({
+export async function createViteServer(app: express.Application) {
+  const vite = await createServer({
     server: {
       middlewareMode: true,
-      hmr: {
-        port: 3001
-      } as HmrOptions,
-      ...options
+      hmr: process.env.VITE_DEV_SERVER_URL
+        ? {
+            port: parseInt(new URL(process.env.VITE_DEV_SERVER_URL).port, 10)
+          }
+        : undefined,
     },
-    appType: 'custom',
-    allowedHosts: 'all'
+    appType: "custom",
+    root: resolve(__dirname, "../client"),
+    build: {
+      target: "esnext",
+      outDir: resolve(__dirname, "../dist/public"),
+      assetsDir: "assets",
+      emptyOutDir: true,
+      rollupOptions: {
+        input: resolve(__dirname, "../client/src/main.tsx"),
+      },
+    },
   });
+
+  app.use(vite.middlewares);
+
+  return vite;
 }
 
 export async function setupVite(app: Express, server: Server) {
@@ -41,21 +59,8 @@ export async function setupVite(app: Express, server: Server) {
     allowedHosts: true,
   };
 
-  const vite = await createViteServer({
-    ...viteConfig,
-    configFile: false,
-    customLogger: {
-      ...viteLogger,
-      error: (msg, options) => {
-        viteLogger.error(msg, options);
-        process.exit(1);
-      },
-    },
-    server: serverOptions,
-    appType: "custom",
-  });
+  const vite = await createViteServer(app);
 
-  app.use(vite.middlewares);
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
 

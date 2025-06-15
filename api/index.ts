@@ -27,6 +27,8 @@ import {
   QuestionTemplateData,
   UserAnswerData
 } from '@shared/schema';
+import session from 'express-session';
+import { z } from 'zod';
 
 // Extend Express Request type to include user
 declare global {
@@ -66,6 +68,17 @@ app.use(limiter);
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'your-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
+  })
+);
 
 // Auth middleware
 const authMiddleware = async (req: Request, res: Response, next: Function) => {
@@ -113,6 +126,60 @@ const getUserId = async (req: Request): Promise<number | null> => {
     return dbUser?.id || null;
   }
   return null;
+};
+
+// Schema definitions
+const personalInfoSchema = z.object({
+  firstName: z.string(),
+  lastName: z.string(),
+  email: z.string().email(),
+  phone: z.string().optional(),
+  location: z.string().optional(),
+  linkedin: z.string().url().optional(),
+  website: z.string().url().optional(),
+  summary: z.string().optional(),
+});
+
+const workExperienceSchema = z.object({
+  company: z.string(),
+  title: z.string(),
+  location: z.string().optional(),
+  startDate: z.string(),
+  endDate: z.string().optional(),
+  current: z.boolean().optional(),
+  description: z.string().optional(),
+});
+
+const educationSchema = z.object({
+  institution: z.string(),
+  degree: z.string(),
+  field: z.string().optional(),
+  startDate: z.string(),
+  endDate: z.string().optional(),
+  current: z.boolean().optional(),
+  description: z.string().optional(),
+});
+
+const questionTemplateSchema = z.object({
+  category: z.string(),
+  question: z.string(),
+  questionType: z.string(),
+  options: z.array(z.string()).optional(),
+  description: z.string().optional(),
+  commonFields: z.array(z.string()).optional(),
+});
+
+// Type definitions
+type QuestionTemplate = z.infer<typeof questionTemplateSchema>;
+type UserAnswer = {
+  userId: number;
+  templateId: number;
+  answer: string;
+};
+type QuestionTemplateData = z.infer<typeof questionTemplateSchema>;
+type UserAnswerData = {
+  templateId: number;
+  answer: string;
 };
 
 // API Routes
@@ -248,7 +315,7 @@ app.post('/api/answers', authMiddleware, async (req, res) => {
 // Development mode setup
 async function setupDevMode() {
   if (process.env.NODE_ENV === 'development') {
-    const vite = await createViteServer();
+    const vite = await createViteServer(app);
     app.use(vite.middlewares);
 
     app.use('*', async (req, res) => {
