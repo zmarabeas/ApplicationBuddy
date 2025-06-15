@@ -93,7 +93,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   // Mutations
   const updatePersonalInfoMutation = useMutation({
     mutationFn: async (personalInfo: PersonalInfo) => {
-      await apiRequest("PUT", "/api/profile", { personalInfo });
+      console.log("Updating personal info:", personalInfo);
+      await apiRequest("PATCH", "/api/profile/personal-info", personalInfo);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/profile'] });

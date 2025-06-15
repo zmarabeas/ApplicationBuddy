@@ -69,8 +69,14 @@ app.use(cors({
   origin: true, // Allow all origins in development
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
+
+// Handle OPTIONS requests
+app.options('*', cors());
+
 app.use(express.json());
 app.use(
   session({
