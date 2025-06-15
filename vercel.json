@@ -1,5 +1,7 @@
 {
   "version": 2,
+  "buildCommand": "npm run build:client",
+  "outputDirectory": "dist",
   "functions": {
     "api/index.ts": {
       "memory": 1024,
@@ -12,7 +14,12 @@
       "dest": "/api/index.ts"
     },
     {
-      "handle": "filesystem"
+      "src": "/assets/(.*)",
+      "dest": "/dist/assets/$1"
+    },
+    {
+      "src": "/(.*\\.(js|css|ico|png|jpg|jpeg|svg|woff|woff2|ttf|eot))",
+      "dest": "/dist/$1"
     },
     {
       "src": "/(.*)",

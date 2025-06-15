@@ -28,7 +28,7 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, "dist"),
     emptyOutDir: true,
     rollupOptions: {
-      input: 'client/src/main.tsx',
+      input: path.resolve(import.meta.dirname, "client", "index.html"),
       external: ['fsevents'],
       output: {
         manualChunks: {
@@ -48,7 +48,8 @@ export default defineConfig({
       }
     },
     chunkSizeWarningLimit: 500,
-    minify: true
+    minify: true,
+    sourcemap: false
   },
   optimizeDeps: {
     include: [
