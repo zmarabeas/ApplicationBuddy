@@ -1,5 +1,5 @@
 import { storage } from './storage.js';
-import { QuestionTemplateData } from '../shared/schema.js';
+import { QuestionTemplateData } from './schema.js';
 import { z } from 'zod';
 
 // Template categories
