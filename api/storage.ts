@@ -1,9 +1,12 @@
 import { 
-  User, InsertUser, Profile, WorkExperience, Education, Resume,
+  InsertUser, User, Profile, WorkExperience, Education, Resume,
   QuestionTemplate, UserAnswer, QuestionTemplateData, UserAnswerData,
   users, profiles, workExperiences, educations, resumes,
-  questionTemplates, userAnswers
-} from "../shared/schema";
+  questionTemplates, userAnswers,
+  insertUserSchema, insertProfileSchema, insertWorkExperienceSchema,
+  insertEducationSchema, insertResumeSchema, insertQuestionTemplateSchema,
+  insertUserAnswerSchema
+} from "./schema.js";
 import { eq, and } from "drizzle-orm";
 import { db } from "./db";
 

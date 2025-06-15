@@ -3,7 +3,7 @@ import {
   QuestionTemplate, UserAnswer, QuestionTemplateData, UserAnswerData,
   users, profiles, workExperiences, educations, resumes,
   questionTemplates, userAnswers
-} from "../../shared/schema";
+} from "../schema.js";
 import { eq, and } from "drizzle-orm";
 import { db } from "../db";
 import admin from 'firebase-admin';
