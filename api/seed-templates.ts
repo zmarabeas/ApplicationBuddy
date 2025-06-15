@@ -1,5 +1,5 @@
 import { storage } from './storage.ts';
-import { QuestionTemplateData } from '@shared/schema';
+import { QuestionTemplateData } from '../shared/schema.ts';
 import { z } from 'zod';
 
 // Template categories

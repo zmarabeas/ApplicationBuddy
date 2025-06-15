@@ -3,7 +3,7 @@ import { IStorage } from './storage.ts';
 import { 
   InsertUser, User, Profile, WorkExperience, Education, Resume,
   QuestionTemplate, UserAnswer, QuestionTemplateData, UserAnswerData
-} from '@shared/schema';
+} from '../shared/schema.ts';
 
 // Initialize Firebase Admin if not already initialized
 if (!admin.apps.length) {

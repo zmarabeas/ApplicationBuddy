@@ -26,7 +26,7 @@ import {
   UserAnswer,
   QuestionTemplateData,
   UserAnswerData
-} from '@shared/schema';
+} from '../shared/schema.ts';
 import session from 'express-session';
 
 // Extend Express Request type to include user
