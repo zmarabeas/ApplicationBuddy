@@ -35,6 +35,25 @@ const personalInfoSchema = z.object({
 
 type PersonalInfoFormValues = z.infer<typeof personalInfoSchema>;
 
+type PersonalInfo = {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    country?: string;
+  };
+  links?: {
+    linkedin?: string;
+    github?: string;
+    portfolio?: string;
+  };
+};
+
 export default function PersonalInfoForm() {
   const { profileData, updatePersonalInfo } = useProfile();
   const [isSaving, setIsSaving] = useState(false);
@@ -42,7 +61,7 @@ export default function PersonalInfoForm() {
   const [mounted, setMounted] = useState(false);
   
   // Get personal info from profile data
-  const personalInfo = profileData?.profile?.personalInfo || {};
+  const personalInfo: PersonalInfo = profileData?.profile?.personalInfo || {};
   
   // Add mounting animation
   useEffect(() => {

@@ -407,10 +407,13 @@ export class FirestoreStorage implements IStorage {
       const updatedUser = {
         ...snapshot.data(),
         ...updatedData,
-        id
+        id,
+        updatedAt: new Date(),
+        createdAt: snapshot.data()?.createdAt?.toDate() || null,
+        lastLogin: snapshot.data()?.lastLogin?.toDate() || null
       };
       
-      return updatedUser as User;
+      return updatedUser as unknown as User;
     } catch (error) {
       console.error('Error updating user:', error);
       throw error;
