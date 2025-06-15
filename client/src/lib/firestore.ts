@@ -11,7 +11,7 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
-import type { PersonalInfo, WorkExperience, Education } from '@shared/schema';
+import type { PersonalInfo, WorkExperience, Education } from '../../../shared/schema.js';
 
 // Define Firestore collections
 const USERS_COLLECTION = 'users';
