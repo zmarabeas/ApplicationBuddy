@@ -3,6 +3,12 @@
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
+  "resolutions": {
+    "**/pkg": false
+  },
+  "overrides": {
+    "**/pkg": false
+  },
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
     "build": "vite build",

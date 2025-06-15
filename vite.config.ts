@@ -97,8 +97,7 @@ const serverConfig: UserConfig = {
     emptyOutDir: true,
     rollupOptions: {
       input: 'api/index.ts',
-      external: [
-        'fsevents',
+      external: (id) => id.includes('pkg') || id === 'fsevents' || [
         'firebase',
         'firebase-admin',
         'firebase/auth',
@@ -149,7 +148,7 @@ const serverConfig: UserConfig = {
         'timers',
         'domain',
         'process'
-      ],
+      ].includes(id),
       output: {
         format: 'esm',
         dir: 'dist'
