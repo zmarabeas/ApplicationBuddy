@@ -48,13 +48,7 @@ export default defineConfig({
       }
     },
     chunkSizeWarningLimit: 500,
-    minify: 'terser' as const,
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true
-      }
-    }
+    minify: true
   },
   optimizeDeps: {
     include: [
