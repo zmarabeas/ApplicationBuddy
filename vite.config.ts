@@ -33,8 +33,19 @@ export default defineConfig({
           vendor: ['react', 'react-dom'],
           firebase: ['firebase', 'firebase-admin'],
         }
-      }
+      },
+      external: [
+        'firebase',
+        'firebase-admin',
+        'firebase/auth',
+        'firebase/firestore',
+        'firebase/storage'
+      ]
     }
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom'],
+    exclude: ['firebase', 'firebase-admin']
   },
   server: {
     port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
