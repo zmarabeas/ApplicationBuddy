@@ -28,7 +28,6 @@ import {
   UserAnswerData
 } from '@shared/schema';
 import session from 'express-session';
-import { z } from 'zod';
 
 // Extend Express Request type to include user
 declare global {
@@ -128,60 +127,6 @@ const getUserId = async (req: Request): Promise<number | null> => {
   return null;
 };
 
-// Schema definitions
-const personalInfoSchema = z.object({
-  firstName: z.string(),
-  lastName: z.string(),
-  email: z.string().email(),
-  phone: z.string().optional(),
-  location: z.string().optional(),
-  linkedin: z.string().url().optional(),
-  website: z.string().url().optional(),
-  summary: z.string().optional(),
-});
-
-const workExperienceSchema = z.object({
-  company: z.string(),
-  title: z.string(),
-  location: z.string().optional(),
-  startDate: z.string(),
-  endDate: z.string().optional(),
-  current: z.boolean().optional(),
-  description: z.string().optional(),
-});
-
-const educationSchema = z.object({
-  institution: z.string(),
-  degree: z.string(),
-  field: z.string().optional(),
-  startDate: z.string(),
-  endDate: z.string().optional(),
-  current: z.boolean().optional(),
-  description: z.string().optional(),
-});
-
-const questionTemplateSchema = z.object({
-  category: z.string(),
-  question: z.string(),
-  questionType: z.string(),
-  options: z.array(z.string()).optional(),
-  description: z.string().optional(),
-  commonFields: z.array(z.string()).optional(),
-});
-
-// Type definitions
-type QuestionTemplate = z.infer<typeof questionTemplateSchema>;
-type UserAnswer = {
-  userId: number;
-  templateId: number;
-  answer: string;
-};
-type QuestionTemplateData = z.infer<typeof questionTemplateSchema>;
-type UserAnswerData = {
-  templateId: number;
-  answer: string;
-};
-
 // API Routes
 
 // User routes
@@ -201,22 +146,15 @@ app.get('/api/user', authMiddleware, async (req, res) => {
           photoURL: req.user.firebaseUser.picture || null,
           authProvider: 'firebase'
         });
-        
-        await storage.createProfile(dbUser.id);
       }
       
-      return res.json({
-        id: dbUser.id,
-        email: dbUser.email,
-        displayName: dbUser.displayName,
-        photoURL: dbUser.photoURL
-      });
+      res.json(dbUser);
+    } else {
+      res.status(401).json({ error: 'Not authenticated' });
     }
-    
-    return res.status(401).json({ message: "Not authenticated" });
   } catch (error) {
-    console.error('Get user error:', error);
-    return res.status(500).json({ message: "Server error" });
+    console.error('Error in /api/user:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -312,44 +250,15 @@ app.post('/api/answers', authMiddleware, async (req, res) => {
   }
 });
 
-// Development mode setup
-async function setupDevMode() {
-  if (process.env.NODE_ENV === 'development') {
-    const vite = await createViteServer(app);
-    app.use(vite.middlewares);
-
-    app.use('*', async (req, res) => {
-      try {
-        const url = req.originalUrl;
-        const template = await vite.transformIndexHtml(url, '');
-        res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
-      } catch (e: any) {
-        vite.ssrFixStacktrace(e);
-        console.error(e);
-        res.status(500).end(e.message);
-      }
-    });
-
-    return vite;
-  }
-  return null;
-}
-
-// Initialize the application
-async function init() {
-  // Seed templates if needed
-  await seedTemplates();
-
-  // Setup development mode if needed
-  await setupDevMode();
-
-  // Start server
-  app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+// Development server
+if (process.env.NODE_ENV === "development") {
+  createViteServer(app).catch((err) => {
+    console.error("Error starting Vite server:", err);
+    process.exit(1);
   });
 }
 
-// Start the application
-init().catch(console.error);
-
-export { app };
+// Start server
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
