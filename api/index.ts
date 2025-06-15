@@ -6,7 +6,7 @@ import { initializeApp, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
-import { storage } from './storage';
+import { storage } from './storage/index.js';
 import { processResumeFile } from './resumeProcessor';
 import { parseResumeWithAI } from './openai';
 import { seedTemplates } from './seed-templates';
