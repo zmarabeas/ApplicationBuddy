@@ -182,15 +182,31 @@ app.put('/api/profile', authMiddleware, async (req, res) => {
   try {
     const userId = await getUserId(req);
     if (!userId) {
+      console.error('No user ID found in request');
       return res.status(401).json({ message: "Not authenticated" });
     }
 
+    console.log('Updating profile for user:', userId);
+    console.log('Profile data:', req.body);
+
     const profileData = profileSchema.parse(req.body);
+    console.log('Parsed profile data:', profileData);
+
     const updatedProfile = await storage.updateProfile(userId, profileData);
+    console.log('Profile updated successfully:', updatedProfile);
+    
     res.json(updatedProfile);
-  } catch (error) {
-    console.error('Update profile error:', error);
-    res.status(500).json({ message: "Server error" });
+  } catch (error: any) {
+    console.error('Update profile error details:', {
+      error,
+      message: error?.message,
+      stack: error?.stack,
+      body: req.body
+    });
+    res.status(500).json({ 
+      message: "Server error",
+      details: error?.message || 'Unknown error'
+    });
   }
 });
 
