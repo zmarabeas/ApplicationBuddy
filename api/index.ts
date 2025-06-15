@@ -10,7 +10,6 @@ import { storage } from './storage/index.js';
 import { processResumeFile } from './resumeProcessor.js';
 import { parseResumeWithAI } from './openai.js';
 import { seedTemplates } from './seed-templates.js';
-import { db } from './db.js';
 import { createViteServer } from './vite.js';
 import type { ViteDevServer } from 'vite';
 import type { Express, Request, Response } from 'express';
@@ -44,9 +43,16 @@ declare global {
 }
 
 // Initialize Firebase Admin
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '{}');
+if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
+  throw new Error('Missing required Firebase environment variables');
+}
+
 initializeApp({
-  credential: cert(serviceAccount),
+  credential: cert({
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+  }),
   storageBucket: process.env.FIREBASE_STORAGE_BUCKET
 });
 
