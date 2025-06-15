@@ -1,9 +1,10 @@
-import { defineConfig } from "vite";
+import { defineConfig, type ConfigEnv, type UserConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
-export default defineConfig({
+// Client-side configuration
+const clientConfig: UserConfig = {
   plugins: [
     react(),
     runtimeErrorOverlay(),
@@ -48,17 +49,10 @@ export default defineConfig({
             'uuid'
           ]
         }
-      },
-      external: [
-        'firebase',
-        'firebase-admin',
-        'firebase/auth',
-        'firebase/firestore',
-        'firebase/storage'
-      ]
+      }
     },
     chunkSizeWarningLimit: 500,
-    minify: 'terser',
+    minify: 'terser' as const,
     terserOptions: {
       compress: {
         drop_console: true,
@@ -80,10 +74,62 @@ export default defineConfig({
       'date-fns',
       'lodash',
       'uuid'
-    ],
-    exclude: ['firebase', 'firebase-admin']
+    ]
   },
   server: {
     port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
   }
+};
+
+// Server-side configuration
+const serverConfig: UserConfig = {
+  build: {
+    outDir: path.resolve(import.meta.dirname, "dist"),
+    emptyOutDir: true,
+    rollupOptions: {
+      input: 'api/index.ts',
+      output: {
+        format: 'esm',
+        dir: 'dist'
+      },
+      external: [
+        'firebase',
+        'firebase-admin',
+        'firebase/auth',
+        'firebase/firestore',
+        'firebase/storage',
+        'express',
+        'cors',
+        'express-rate-limit',
+        'multer',
+        'openai',
+        'pdf-parse',
+        'mammoth'
+      ]
+    }
+  }
+};
+
+// Export the appropriate config based on the build target
+export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
+  if (command === 'build' && mode === 'production') {
+    const buildConfig = clientConfig.build || {};
+    return {
+      ...clientConfig,
+      build: {
+        ...buildConfig,
+        rollupOptions: {
+          ...buildConfig.rollupOptions,
+          external: [
+            'firebase',
+            'firebase-admin',
+            'firebase/auth',
+            'firebase/firestore',
+            'firebase/storage'
+          ]
+        }
+      }
+    };
+  }
+  return clientConfig;
 });
