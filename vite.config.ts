@@ -30,6 +30,7 @@ const clientConfig: UserConfig = {
     emptyOutDir: true,
     rollupOptions: {
       input: 'client/src/main.tsx',
+      external: ['fsevents'],
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom'],
@@ -96,11 +97,8 @@ const serverConfig: UserConfig = {
     emptyOutDir: true,
     rollupOptions: {
       input: 'api/index.ts',
-      output: {
-        format: 'esm',
-        dir: 'dist'
-      },
       external: [
+        'fsevents',
         'firebase',
         'firebase-admin',
         'firebase/auth',
@@ -123,7 +121,11 @@ const serverConfig: UserConfig = {
         'drizzle-zod',
         'zod',
         'pg'
-      ]
+      ],
+      output: {
+        format: 'esm',
+        dir: 'dist'
+      }
     }
   },
   optimizeDeps: {
