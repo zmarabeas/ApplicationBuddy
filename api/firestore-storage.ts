@@ -5,22 +5,6 @@ import {
   QuestionTemplate, UserAnswer, QuestionTemplateData, UserAnswerData
 } from './schema.js';
 
-// Initialize Firebase Admin if not already initialized
-if (!admin.apps.length) {
-  try {
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.VITE_FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
-    });
-    console.log("Firebase Admin initialized successfully in firestore-storage");
-  } catch (error) {
-    console.error("Firebase Admin initialization error in firestore-storage:", error);
-  }
-}
-
 // Get Firestore instance
 const db = admin.firestore();
 
