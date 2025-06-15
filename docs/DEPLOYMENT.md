@@ -1,94 +1,141 @@
-# JobFillr Vercel Deployment Guide
+# Deployment Guide
 
-## Required Environment Variables
+## Current Deployment
+The application is currently deployed on Vercel at: https://application-buddy.vercel.app
 
-### Firebase Configuration
-```
-FIREBASE_PROJECT_ID=jobassist-xmxdx
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n[Your Firebase Admin SDK Private Key]\n-----END PRIVATE KEY-----"
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk-fbsvc@jobassist-xmxdx.iam.gserviceaccount.com
-```
+## Environment Setup
+1. Required Environment Variables
+   ```
+   DATABASE_URL=your_database_url
+   FIREBASE_SERVICE_ACCOUNT=your_firebase_service_account_json
+   FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
+   SESSION_SECRET=your_session_secret
+   ```
 
-### Firebase Client Configuration (Frontend)
-```
-VITE_FIREBASE_API_KEY=AIzaSyCGXXXXXXXXXXXXXXXXXXXXXXXXXXXXc5lIc
-VITE_FIREBASE_AUTH_DOMAIN=jobassist-xmxdx.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=jobassist-xmxdx
-VITE_FIREBASE_STORAGE_BUCKET=jobassist-xmxdx.firebasestorage.app
-VITE_FIREBASE_MESSAGING_SENDER_ID=593613955
-VITE_FIREBASE_APP_ID=1:593613955:web:xxxxxxxxxxxxxxxxxxxxx
-```
+2. Vercel Configuration
+   - Set up environment variables in Vercel dashboard
+   - Configure build settings
+   - Set up domain and SSL
 
-### Database
-```
-DATABASE_URL=postgresql://username:password@host:port/database
-```
+## Build Process
+1. Client Build
+   ```bash
+   npm run build:client
+   ```
 
-### OpenAI
-```
-OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-```
+2. Server Build
+   ```bash
+   npm run build:server
+   ```
 
-### Session Security
-```
-SESSION_SECRET=your-super-secure-random-session-secret-here
-```
+3. Combined Build
+   ```bash
+   npm run build
+   ```
 
-### Node Environment
-```
-NODE_ENV=production
-```
+## Current Issues and Solutions
+
+### API Integration Issues
+1. CORS Configuration
+   ```json
+   {
+     "routes": [
+       {
+         "src": "/api/(.*)",
+         "dest": "/api/index.ts",
+         "headers": {
+           "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+           "Access-Control-Allow-Headers": "X-Requested-With, Content-Type, Accept, Authorization"
+         }
+       }
+     ]
+   }
+   ```
+
+2. Serverless Function Configuration
+   ```json
+   {
+     "functions": {
+       "api/index.ts": {
+         "memory": 1024,
+         "maxDuration": 30
+       }
+     }
+   }
+   ```
+
+### Authentication Issues
+1. Google OAuth Configuration
+   - Add authorized domains in Firebase Console
+   - Configure OAuth redirect URLs in Vercel
+   - Update Firebase configuration
+
+2. Token Handling
+   - Ensure proper token refresh
+   - Handle session management
+   - Implement proper error handling
 
 ## Deployment Steps
+1. Prepare Environment
+   - Set up all required environment variables
+   - Configure Firebase project
+   - Set up database
 
-### 1. Database Setup
-- Use Neon PostgreSQL (recommended for Vercel)
-- Create a new database on Neon
-- Copy the connection string to `DATABASE_URL`
-- Run `npm run db:push` to set up tables
+2. Build Application
+   - Run client build
+   - Run server build
+   - Test locally
 
-### 2. Firebase Setup
-- Download your Firebase Admin SDK JSON file
-- Extract the `private_key`, `client_email`, and `project_id`
-- Set up Firebase Authentication in your Firebase console
-- Enable Email/Password authentication
+3. Deploy to Vercel
+   - Push to repository
+   - Configure Vercel project
+   - Deploy
 
-### 3. Vercel Configuration
-- Connect your GitHub repository to Vercel
-- Add all environment variables in Vercel dashboard
-- Set build command: `vite build`
-- Set output directory: `dist`
-- Framework preset: Other
+4. Post-deployment
+   - Verify environment variables
+   - Test all functionality
+   - Monitor error logs
 
-### 4. Domain Setup
-- Configure your custom domain in Vercel
-- Update Firebase authorized domains to include your Vercel domain
+## Monitoring and Maintenance
+1. Error Tracking
+   - Monitor Vercel logs
+   - Check Firebase logs
+   - Track user feedback
 
-## Browser Extension Deployment
+2. Performance Monitoring
+   - Monitor API response times
+   - Check database performance
+   - Track resource usage
 
-### Chrome Web Store
-1. Update `extension/manifest.json` with your production API URL
-2. Replace localhost references with your Vercel domain
-3. Package extension as ZIP file
-4. Submit to Chrome Web Store
+3. Regular Updates
+   - Keep dependencies updated
+   - Apply security patches
+   - Monitor for issues
 
-### Firefox Add-ons
-1. Update manifest for Firefox compatibility
-2. Replace API URLs with production endpoints
-3. Submit to Firefox Add-ons marketplace
+## Troubleshooting
+1. Common Issues
+   - 405 Method Not Allowed: Check API route configuration
+   - CORS errors: Verify CORS settings
+   - Authentication issues: Check OAuth configuration
 
-## Build Configuration
+2. Debug Steps
+   - Check Vercel logs
+   - Verify environment variables
+   - Test API endpoints
+   - Check Firebase configuration
 
-The project uses:
-- Vite for frontend bundling
-- Express.js server (serverless functions on Vercel)
-- TypeScript compilation
-- Tailwind CSS processing
+## Security Considerations
+1. Environment Variables
+   - Keep secrets secure
+   - Use proper encryption
+   - Regular rotation
 
-## Post-Deployment Verification
+2. API Security
+   - Implement rate limiting
+   - Use proper authentication
+   - Validate all inputs
 
-1. Test user registration/login
-2. Verify resume upload functionality
-3. Test template system
-4. Check browser extension connectivity
-5. Validate GDPR compliance features
+3. Data Protection
+   - Encrypt sensitive data
+   - Implement proper backups
+   - Regular security audits
