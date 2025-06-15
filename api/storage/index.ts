@@ -5,7 +5,7 @@ import {
   questionTemplates, userAnswers
 } from "../schema.js";
 import { eq, and } from "drizzle-orm";
-import { db } from "../db";
+import { db } from "../db.js";
 import admin from 'firebase-admin';
 
 // Initialize Firebase Admin if not already initialized

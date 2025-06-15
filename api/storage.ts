@@ -8,7 +8,7 @@ import {
   insertUserAnswerSchema
 } from "./schema.js";
 import { eq, and } from "drizzle-orm";
-import { db } from "./db";
+import { db } from "./db.js";
 
 // Modify the interface with any CRUD methods you might need
 export interface IStorage {
