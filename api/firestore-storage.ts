@@ -9,24 +9,11 @@ import {
 
 // Initialize Firebase Admin if not already initialized
 if (!getApps().length) {
-  // Debug: Log all environment variables
-  console.log('All env vars:', {
-    project_id: process.env.FIREBASE_PROJECT_ID,
-    client_email: process.env.FIREBASE_CLIENT_EMAIL,
-    private_key_exists: !!process.env.FIREBASE_PRIVATE_KEY,
-    private_key_length: process.env.FIREBASE_PRIVATE_KEY?.length
-  });
-
   const credentialObject: ServiceAccount = {
-    projectId: process.env.FIREBASE_PROJECT_ID || "jobassist-xmxdx", // Fallback to hardcoded
+    projectId: process.env.FIREBASE_PROJECT_ID || "jobassist-xmxdx",
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
     privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
   };
-
-  console.log('Credential object:', {
-    ...credentialObject,
-    privateKey: credentialObject.privateKey ? '[REDACTED]' : 'MISSING'
-  });
 
   initializeApp({
     credential: cert(credentialObject),
