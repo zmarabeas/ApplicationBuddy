@@ -187,15 +187,18 @@ app.patch('/api/profile/personal-info', authMiddleware, async (req, res) => {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
+    const profile = await storage.getProfile(userId);
+    if (!profile) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+
     console.log('Updating personal info for user:', userId);
     console.log('Personal info data:', req.body);
 
     const personalInfo = personalInfoSchema.parse(req.body);
     console.log('Parsed personal info:', personalInfo);
 
-    const updatedProfile = await storage.updateProfile(userId, {
-      personalInfo
-    });
+    const updatedProfile = await storage.updatePersonalInfo(profile.id, personalInfo);
     console.log('Profile updated successfully:', updatedProfile);
     
     res.json(updatedProfile);
