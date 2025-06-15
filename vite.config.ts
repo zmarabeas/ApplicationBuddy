@@ -32,19 +32,16 @@ export default defineConfig({
       external: ['fsevents'],
       output: {
         manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          'ui-components': [
+          'vendor': [
+            'react',
+            'react-dom',
             '@mui/material',
             '@mui/icons-material',
             '@emotion/react',
-            '@emotion/styled'
-          ],
-          'form-components': [
+            '@emotion/styled',
             'react-hook-form',
             '@hookform/resolvers',
-            'zod'
-          ],
-          'utils': [
+            'zod',
             'date-fns',
             'lodash',
             'uuid'
