@@ -17,6 +17,16 @@ const RESUMES_COLLECTION = 'resumes';
 const QUESTION_TEMPLATES_COLLECTION = 'questionTemplates';
 const USER_ANSWERS_COLLECTION = 'userAnswers';
 
+// Add transaction helper
+async function runInTransaction<T>(operation: (transaction: FirebaseFirestore.Transaction) => Promise<T>): Promise<T> {
+  try {
+    return await db.runTransaction(operation);
+  } catch (error) {
+    console.error('Transaction error:', error);
+    throw error;
+  }
+}
+
 export class FirestoreStorage implements IStorage {
   // This allows us to use session-related functions from Express
   sessionStore: any = {
@@ -345,9 +355,10 @@ export class FirestoreStorage implements IStorage {
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    try {
-      // Get the next ID (in a real app, you'd use a transaction for this)
-      const counterDoc = await db.collection('counters').doc('users').get();
+    return runInTransaction(async (transaction) => {
+      // Get the next ID
+      const counterRef = db.collection('counters').doc('users');
+      const counterDoc = await transaction.get(counterRef);
       let nextId = 1;
       
       if (counterDoc.exists) {
@@ -355,7 +366,7 @@ export class FirestoreStorage implements IStorage {
       }
       
       // Update the counter
-      await db.collection('counters').doc('users').set({ value: nextId });
+      transaction.set(counterRef, { value: nextId });
       
       // Create the user with the auto-incrementing ID
       const newUser = {
@@ -365,19 +376,16 @@ export class FirestoreStorage implements IStorage {
         updatedAt: FieldValue.serverTimestamp()
       };
       
-      await db.collection(USERS_COLLECTION).doc(nextId.toString()).set(newUser);
+      const userRef = db.collection(USERS_COLLECTION).doc(nextId.toString());
+      transaction.set(userRef, newUser);
       
-      // Use type assertion to handle Firestore timestamp vs Date typing
       return { 
         ...newUser, 
         lastLogin: null, 
         createdAt: null, 
         updatedAt: null 
       } as unknown as User;
-    } catch (error) {
-      console.error('Error creating user:', error);
-      throw error;
-    }
+    });
   }
 
   async updateUser(id: number, userData: Partial<User>): Promise<User> {
@@ -578,15 +586,15 @@ export class FirestoreStorage implements IStorage {
   }
 
   async updateProfileCompletionPercentage(profileId: number): Promise<number> {
-    try {
+    return runInTransaction(async (transaction) => {
       const profileRef = db.collection(PROFILES_COLLECTION).doc(profileId.toString());
-      const snapshot = await profileRef.get();
+      const profileDoc = await transaction.get(profileRef);
       
-      if (!snapshot.exists) {
+      if (!profileDoc.exists) {
         throw new Error(`Profile with ID ${profileId} not found`);
       }
       
-      const profileData = snapshot.data();
+      const profileData = profileDoc.data();
       let completionPercentage = 0;
       let totalFields = 0;
       let completedFields = 0;
@@ -660,17 +668,14 @@ export class FirestoreStorage implements IStorage {
         completionPercentage = Math.round((completedFields / totalFields) * 100);
       }
       
-      // Update profile with new completion percentage
-      await profileRef.update({
+      // Update the profile with new completion percentage
+      transaction.update(profileRef, {
         completionPercentage,
         updatedAt: FieldValue.serverTimestamp()
       });
       
       return completionPercentage;
-    } catch (error) {
-      console.error('Error calculating profile completion percentage:', error);
-      throw error;
-    }
+    });
   }
 
   // Work Experience operations

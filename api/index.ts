@@ -6,11 +6,12 @@ import { initializeApp, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
-import { storage } from './storage/index.js';
+import { firestoreStorage } from './firestore-storage.js';
 import { processResumeFile } from './resumeProcessor.js';
 import { parseResumeWithAI } from './openai.js';
 import { seedTemplates } from './seed-templates.js';
 import { createViteServer } from './vite.js';
+import { config } from './config.js';
 import type { ViteDevServer } from 'vite';
 import type { Express, Request, Response } from 'express';
 import type { DecodedIdToken } from 'firebase-admin/auth';
@@ -43,17 +44,13 @@ declare global {
 }
 
 // Initialize Firebase Admin
-if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
-  throw new Error('Missing required Firebase environment variables');
-}
-
 initializeApp({
   credential: cert({
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    projectId: config.firebase.projectId,
+    clientEmail: config.firebase.clientEmail,
+    privateKey: config.firebase.privateKey,
   }),
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET
+  storageBucket: config.firebase.storageBucket
 });
 
 // Create Express app
@@ -62,26 +59,35 @@ const port = process.env.PORT || 3000;
 
 // Rate limiting configuration
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  windowMs: config.rateLimit.windowMs,
+  max: config.rateLimit.max,
   message: 'Too many requests from this IP, please try again later.'
 });
 
 // Apply rate limiting to all routes
 app.use(limiter);
 
-// Middleware
-app.use(cors({
-  origin: true, // Allow all origins in development
+// CORS configuration
+const corsOptions = {
+  origin: config.server.env === 'production' 
+    ? [
+        config.webApp.url || '',
+        config.webApp.extensionId ? `chrome-extension://${config.webApp.extensionId}` : ''
+      ].filter(Boolean) as string[]
+    : true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
   preflightContinue: false,
-  optionsSuccessStatus: 204
-}));
+  optionsSuccessStatus: 204,
+  maxAge: config.cors.maxAge
+};
+
+// Apply CORS with options
+app.use(cors(corsOptions));
 
 // Handle OPTIONS requests
-app.options('*', cors());
+app.options('*', cors(corsOptions));
 
 app.use(express.json());
 app.use(
@@ -121,11 +127,11 @@ const authMiddleware = async (req: Request, res: Response, next: Function) => {
 // Helper function to get user ID from Firebase UID
 const getUserId = async (req: Request): Promise<number | null> => {
   if (req.user?.uid) {
-    let dbUser = await storage.getUserByFirebaseUID(req.user.uid);
+    let dbUser = await firestoreStorage.getUserByFirebaseUID(req.user.uid);
     
     if (!dbUser) {
       console.log(`Auto-creating new user for Firebase UID: ${req.user.uid}`);
-      dbUser = await storage.createUser({
+      dbUser = await firestoreStorage.createUser({
         email: req.user.email,
         username: req.user.email,
         displayName: req.user.firebaseUser.name || req.user.email.split('@')[0],
@@ -135,7 +141,7 @@ const getUserId = async (req: Request): Promise<number | null> => {
         authProvider: 'firebase'
       });
       
-      await storage.createProfile(dbUser.id);
+      await firestoreStorage.createProfile(dbUser.id);
       console.log(`Created user ID ${dbUser.id} and profile for Firebase user ${req.user.uid}`);
     }
     
@@ -150,11 +156,11 @@ const getUserId = async (req: Request): Promise<number | null> => {
 app.get('/api/user', authMiddleware, async (req, res) => {
   try {
     if (req.user?.uid) {
-      let dbUser = await storage.getUserByFirebaseUID(req.user.uid);
+      let dbUser = await firestoreStorage.getUserByFirebaseUID(req.user.uid);
       
       if (!dbUser) {
         console.log(`Creating new user for Firebase UID: ${req.user.uid}`);
-        dbUser = await storage.createUser({
+        dbUser = await firestoreStorage.createUser({
           email: req.user.email,
           username: req.user.email,
           displayName: req.user.firebaseUser.name || req.user.email.split('@')[0],
@@ -183,7 +189,7 @@ app.get('/api/profile', authMiddleware, async (req, res) => {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
-    const profile = await storage.getProfile(userId);
+    const profile = await firestoreStorage.getProfile(userId);
     if (!profile) {
       return res.status(404).json({ message: "Profile not found" });
     }
@@ -210,7 +216,7 @@ app.patch('/api/profile/personal-info', authMiddleware, async (req, res) => {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
-    const profile = await storage.getProfile(userId);
+    const profile = await firestoreStorage.getProfile(userId);
     if (!profile) {
       return res.status(404).json({ message: "Profile not found" });
     }
@@ -221,7 +227,7 @@ app.patch('/api/profile/personal-info', authMiddleware, async (req, res) => {
     const personalInfo = personalInfoSchema.parse(req.body);
     console.log('Parsed personal info:', personalInfo);
 
-    const updatedProfile = await storage.updatePersonalInfo(profile.id, personalInfo);
+    const updatedProfile = await firestoreStorage.updatePersonalInfo(profile.id, personalInfo);
     console.log('Profile updated successfully:', updatedProfile);
     
     res.json(updatedProfile);
@@ -253,7 +259,7 @@ app.put('/api/profile', authMiddleware, async (req, res) => {
     const profileData = profileSchema.parse(req.body);
     console.log('Parsed profile data:', profileData);
 
-    const updatedProfile = await storage.updateProfile(userId, profileData);
+    const updatedProfile = await firestoreStorage.updateProfile(userId, profileData);
     console.log('Profile updated successfully:', updatedProfile);
     
     res.json(updatedProfile);
@@ -279,13 +285,13 @@ app.post('/api/profile/work-experiences', authMiddleware, async (req, res) => {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
-    const profile = await storage.getProfile(userId);
+    const profile = await firestoreStorage.getProfile(userId);
     if (!profile) {
       return res.status(404).json({ message: "Profile not found" });
     }
 
     const workExp = workExperienceSchema.parse(req.body);
-    const updatedWorkExp = await storage.addWorkExperience(profile.id, workExp);
+    const updatedWorkExp = await firestoreStorage.addWorkExperience(profile.id, workExp);
     res.json(updatedWorkExp);
   } catch (error) {
     console.error('Add work experience error:', error);
@@ -301,7 +307,7 @@ app.patch('/api/profile/work-experiences/:id', authMiddleware, async (req, res) 
     }
 
     const workExp = workExperienceSchema.parse(req.body);
-    const updatedWorkExp = await storage.updateWorkExperience(parseInt(req.params.id), workExp);
+    const updatedWorkExp = await firestoreStorage.updateWorkExperience(parseInt(req.params.id), workExp);
     res.json(updatedWorkExp);
   } catch (error) {
     console.error('Update work experience error:', error);
@@ -316,7 +322,7 @@ app.delete('/api/profile/work-experiences/:id', authMiddleware, async (req, res)
       return res.status(401).json({ message: "Not authenticated" });
     }
 
-    const success = await storage.deleteWorkExperience(parseInt(req.params.id));
+    const success = await firestoreStorage.deleteWorkExperience(parseInt(req.params.id));
     res.json({ success });
   } catch (error) {
     console.error('Delete work experience error:', error);
@@ -332,13 +338,13 @@ app.post('/api/profile/educations', authMiddleware, async (req, res) => {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
-    const profile = await storage.getProfile(userId);
+    const profile = await firestoreStorage.getProfile(userId);
     if (!profile) {
       return res.status(404).json({ message: "Profile not found" });
     }
 
     const education = educationSchema.parse(req.body);
-    const updatedEducation = await storage.addEducation(profile.id, education);
+    const updatedEducation = await firestoreStorage.addEducation(profile.id, education);
     res.json(updatedEducation);
   } catch (error) {
     console.error('Add education error:', error);
@@ -354,7 +360,7 @@ app.patch('/api/profile/educations/:id', authMiddleware, async (req, res) => {
     }
 
     const education = educationSchema.parse(req.body);
-    const updatedEducation = await storage.updateEducation(parseInt(req.params.id), education);
+    const updatedEducation = await firestoreStorage.updateEducation(parseInt(req.params.id), education);
     res.json(updatedEducation);
   } catch (error) {
     console.error('Update education error:', error);
@@ -369,7 +375,7 @@ app.delete('/api/profile/educations/:id', authMiddleware, async (req, res) => {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
-    const success = await storage.deleteEducation(parseInt(req.params.id));
+    const success = await firestoreStorage.deleteEducation(parseInt(req.params.id));
     res.json({ success });
   } catch (error) {
     console.error('Delete education error:', error);
@@ -385,7 +391,7 @@ app.patch('/api/profile/skills', authMiddleware, async (req, res) => {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
-    const profile = await storage.getProfile(userId);
+    const profile = await firestoreStorage.getProfile(userId);
     if (!profile) {
       return res.status(404).json({ message: "Profile not found" });
     }
@@ -395,7 +401,7 @@ app.patch('/api/profile/skills', authMiddleware, async (req, res) => {
       return res.status(400).json({ message: "Skills must be an array" });
     }
 
-    const updatedProfile = await storage.updateSkills(profile.id, skills);
+    const updatedProfile = await firestoreStorage.updateSkills(profile.id, skills);
     res.json(updatedProfile);
   } catch (error) {
     console.error('Update skills error:', error);
@@ -417,7 +423,7 @@ app.post('/api/resumes/upload', authMiddleware, async (req, res) => {
     }
 
     const parsedData = await processResumeFile(file, fileType);
-    const resume = await storage.addResume(userId, {
+    const resume = await firestoreStorage.addResume(userId, {
       content: file,
       parsedData: JSON.stringify(parsedData)
     });
@@ -436,7 +442,7 @@ app.get('/api/resumes', authMiddleware, async (req, res) => {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
-    const resumes = await storage.getResumes(userId);
+    const resumes = await firestoreStorage.getResumes(userId);
     res.json(resumes);
   } catch (error) {
     console.error('Get resumes error:', error);
@@ -451,7 +457,7 @@ app.delete('/api/resumes/:id', authMiddleware, async (req, res) => {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
-    const success = await storage.deleteResume(parseInt(req.params.id));
+    const success = await firestoreStorage.deleteResume(parseInt(req.params.id));
     res.json({ success });
   } catch (error) {
     console.error('Delete resume error:', error);
@@ -467,15 +473,15 @@ app.get('/api/user/export-data', authMiddleware, async (req, res) => {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
-    const profile = await storage.getProfile(userId);
+    const profile = await firestoreStorage.getProfile(userId);
     if (!profile) {
       return res.status(404).json({ message: "Profile not found" });
     }
 
-    const workExperiences = await storage.getWorkExperiences(profile.id);
-    const educations = await storage.getEducations(profile.id);
-    const resumes = await storage.getResumes(userId);
-    const answers = await storage.getUserAnswers(userId);
+    const workExperiences = await firestoreStorage.getWorkExperiences(profile.id);
+    const educations = await firestoreStorage.getEducations(profile.id);
+    const resumes = await firestoreStorage.getResumes(userId);
+    const answers = await firestoreStorage.getUserAnswers(userId);
 
     res.json({
       profile,
@@ -497,9 +503,9 @@ app.post('/api/user/delete-account', authMiddleware, async (req, res) => {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
-    const profile = await storage.getProfile(userId);
+    const profile = await firestoreStorage.getProfile(userId);
     if (profile) {
-      await storage.resetUserProfile(userId);
+      await firestoreStorage.resetUserProfile(userId);
     }
 
     res.json({ message: "Account deleted successfully" });
@@ -517,7 +523,7 @@ app.post('/api/profile/reset', authMiddleware, async (req, res) => {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
-    const success = await storage.resetUserProfile(userId);
+    const success = await firestoreStorage.resetUserProfile(userId);
     res.json({ success });
   } catch (error) {
     console.error('Reset profile error:', error);
@@ -534,7 +540,7 @@ app.post('/api/answers', authMiddleware, async (req, res) => {
     }
 
     const answer = userAnswerSchema.parse(req.body);
-    const savedAnswer = await storage.saveUserAnswer(userId, answer);
+    const savedAnswer = await firestoreStorage.saveUserAnswer(userId, answer);
     res.json(savedAnswer);
   } catch (error) {
     console.error('Save answer error:', error);
@@ -545,13 +551,58 @@ app.post('/api/answers', authMiddleware, async (req, res) => {
 // Question template routes
 app.get('/api/questions', authMiddleware, async (req, res) => {
   try {
-    const templates = await storage.getQuestionTemplates();
+    const templates = await firestoreStorage.getQuestionTemplates();
     res.json(templates);
   } catch (error) {
     console.error('Get questions error:', error);
     res.status(500).json({ message: "Server error" });
   }
 });
+
+// Error handling middleware
+const errorHandler = (err: any, req: Request, res: Response, next: Function) => {
+  console.error('API Error:', {
+    error: err,
+    message: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+    body: req.body
+  });
+
+  // Handle validation errors
+  if (err.name === 'ZodError') {
+    return res.status(400).json({
+      error: 'Validation Error',
+      details: err.errors
+    });
+  }
+
+  // Handle Firebase auth errors
+  if (err.code?.startsWith('auth/')) {
+    return res.status(401).json({
+      error: 'Authentication Error',
+      message: err.message
+    });
+  }
+
+  // Handle Firestore errors
+  if (err.code?.startsWith('firestore/')) {
+    return res.status(500).json({
+      error: 'Database Error',
+      message: 'An error occurred while accessing the database'
+    });
+  }
+
+  // Default error response
+  res.status(500).json({
+    error: 'Internal Server Error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'An unexpected error occurred'
+  });
+};
+
+// Apply error handling middleware last
+app.use(errorHandler);
 
 // Development server
 if (process.env.NODE_ENV === "development") {
