@@ -1,14 +1,14 @@
-import { useRouter } from 'next/router';
+'use client';
+import { useLocation } from 'wouter';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { FaRocket, FaUserFriends, FaChartLine } from 'react-icons/fa';
 import { MdSecurity, MdAccessibility } from 'react-icons/md';
 
 export default function LandingPage() {
-  const router = useRouter();
+  const [, navigate] = useLocation();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted">
@@ -22,13 +22,13 @@ export default function LandingPage() {
             <div className="flex space-x-4">
               <Button
                 variant="ghost"
-                onClick={() => router.push('/auth/login')}
+                onClick={() => navigate('/auth/login')}
                 className="text-muted-foreground hover:text-foreground"
               >
                 Log in
               </Button>
               <Button
-                onClick={() => router.push('/auth/register')}
+                onClick={() => navigate('/auth/register')}
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 Sign up
@@ -57,7 +57,7 @@ export default function LandingPage() {
             </p>
             <Button
               size="lg"
-              onClick={() => router.push('/auth/register')}
+              onClick={() => navigate('/auth/register')}
               className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-200"
             >
               Start Your Journey
