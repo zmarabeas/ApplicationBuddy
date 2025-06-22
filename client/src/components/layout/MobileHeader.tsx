@@ -2,9 +2,10 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, CheckCircle, LayoutDashboard, User, FileText, Settings, HelpCircle, Lock, FileQuestion } from "lucide-react";
+import { Menu, LayoutDashboard, User, FileText, Settings, HelpCircle, Lock, FileQuestion } from "lucide-react";
 import { cn } from "@/lib/utils";
 import UserInfo from "@/components/layout/UserInfo";
+import AnimatedIcon from "@/components/ui/animated-icon";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function MobileHeader() {
@@ -68,7 +69,7 @@ export default function MobileHeader() {
             {/* Logo */}
             <div className="flex items-center h-16 px-6 border-b border-border">
               <a href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-                <CheckCircle className="w-6 h-6 text-primary" />
+                <AnimatedIcon size={24} />
                 <span className="text-xl font-bold text-foreground">Job<span className="neon-text">Fillr</span></span>
               </a>
             </div>
@@ -114,7 +115,7 @@ export default function MobileHeader() {
 
       <div className="flex justify-center flex-1">
         <a href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-          <CheckCircle className="w-6 h-6 text-primary" />
+          <AnimatedIcon size={24} />
           <span className="text-lg font-bold text-foreground">Job<span className="neon-text">Fillr</span></span>
         </a>
       </div>

@@ -2,6 +2,85 @@
 
 All notable changes to ApplicationBuddy will be documented in this file.
 
+## [2.0.2] - 2025-01-24
+
+### **UI/UX Improvements**
+
+- **Navigation System Overhaul**
+
+  - Fixed dashboard button navigation in sidebar and mobile header
+  - Updated logo navigation to properly link to home page
+  - Improved navigation consistency across desktop and mobile
+  - Added proper hover effects and transitions for navigation elements
+  - Fixed routing logic to maintain proper authentication flow
+
+- **Color Consistency & Theme Fixes**
+
+  - Resolved visibility issues in profile forms (Work Experience, Education, Skills)
+  - Replaced hardcoded gray colors with theme-aware CSS classes
+  - Fixed text color inconsistencies across all profile components
+  - Updated border colors to use proper theme variables
+  - Improved contrast and readability in all form sections
+  - Fixed color issues in resume management page
+  - Updated settings page with consistent theming
+  - Fixed help page color inconsistencies
+
+- **Custom Scrollbar Implementation**
+
+  - Added minimal, visible scrollbars that match site design
+  - Implemented theme-aware scrollbar colors using CSS variables
+  - Added smooth hover effects and transitions
+  - Ensured cross-browser compatibility (WebKit + Firefox)
+  - Created `.custom-scrollbar` class for specific elements
+  - Maintained accessibility standards with proper contrast
+
+- **Logo & Branding Updates**
+
+  - Replaced static CheckCircle icon with animated search icon
+  - Updated logo to use transparent background with light blue color
+  - Implemented consistent animated icon across all navigation elements
+  - Added hover effects for logo interactions
+  - Maintained brand consistency between desktop and mobile
+
+### **Technical Improvements**
+
+- **Component Updates**
+
+  - Updated `Sidebar.tsx` with proper navigation and animated logo
+  - Fixed `MobileHeader.tsx` navigation consistency
+  - Enhanced `WorkExperienceForm.tsx` with theme-aware styling
+  - Improved `EducationForm.tsx` color consistency
+  - Updated `SkillsForm.tsx` with proper theming
+  - Fixed `resume.tsx` page styling issues
+  - Enhanced `settings.tsx` with consistent design
+  - Updated `help.tsx` with proper color scheme
+
+- **CSS & Styling**
+
+  - Added comprehensive scrollbar styling to global CSS
+  - Implemented proper theme variable usage throughout
+  - Fixed border and background color inconsistencies
+  - Added transition effects for better user experience
+  - Ensured responsive design consistency
+
+### **Bug Fixes**
+
+- Fixed navigation routing issues between dashboard and home page
+- Resolved text visibility problems in profile forms
+- Fixed color contrast issues across multiple pages
+- Corrected logo navigation behavior
+- Resolved mobile navigation inconsistencies
+- Fixed theme-aware color implementation
+
+### **Documentation**
+
+- Updated changelog to reflect recent improvements
+- Documented navigation system changes
+- Added color consistency fixes to bug tracker
+- Updated UI/UX improvements in roadmap
+
+---
+
 ## [2.0.1] - 2025-01-24
 
 ### **Bug Fixes**

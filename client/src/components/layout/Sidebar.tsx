@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import UserInfo from "@/components/layout/UserInfo";
+import AnimatedIcon from "@/components/ui/animated-icon";
 import { 
   LayoutDashboard, 
   User, 
@@ -65,7 +66,7 @@ export default function Sidebar({ className }: SidebarProps) {
         {/* Logo */}
         <div className="flex items-center h-16 px-6 border-b border-border">
           <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-            <CheckCircle className="w-6 h-6 text-primary" />
+            <AnimatedIcon size={24} />
             <span className="text-xl font-bold text-foreground">Job<span className="neon-text">Fillr</span></span>
           </Link>
         </div>
