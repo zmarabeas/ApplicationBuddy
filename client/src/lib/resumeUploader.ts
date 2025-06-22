@@ -19,7 +19,7 @@ export async function uploadResume(file: File): Promise<any> {
   const authToken = await getFirebaseToken();
   
   // Upload to server
-  const response = await fetch('/api/resumes/upload', {
+  const response = await fetch('/api/resume/process', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${authToken}`

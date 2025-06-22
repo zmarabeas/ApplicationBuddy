@@ -66,6 +66,7 @@ const TemplatesPage: React.FC = () => {
   });
 
   // Fetch user's saved answers
+  // queryKey: ['/api/answers'], // TODO: Backend does not implement GET /api/answers. See docs/API_REFERENCE.md
   const { data: userAnswersData, isLoading: answersLoading } = useQuery({
     queryKey: ['/api/answers'],
     staleTime: 60000,
@@ -105,7 +106,7 @@ const TemplatesPage: React.FC = () => {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/answers'] });
+      // queryClient.invalidateQueries({ queryKey: ['/api/answers'] }); // TODO: Backend does not implement GET /api/answers. See docs/API_REFERENCE.md
       toast({
         title: 'Answer saved',
         description: 'Your response has been saved successfully.',

@@ -77,7 +77,7 @@ export async function uploadAndParseResume(file: File): Promise<UploadResumeResp
   // Get authentication headers
   const authHeaders = await apiRequest('POST', '', null, true) as Record<string, string>;
   
-  const response = await fetch('/api/resumes/upload', {
+  const response = await fetch('/api/resume/process', {
     method: 'POST',
     credentials: 'include',
     headers: {

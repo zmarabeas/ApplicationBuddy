@@ -22,7 +22,7 @@ export default function ResumeUploadCard() {
       fileType: string, 
       parsedData: ParsedResume 
     }) => {
-      return apiRequest("POST", "/api/resumes", data);
+      return apiRequest("POST", "/api/resume/process", data);
     },
     onSuccess: () => {
       setUploadSuccess(true);

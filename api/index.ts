@@ -1,3 +1,6 @@
+// API documentation: see ../../docs/API_REFERENCE.md for all endpoints, request/response shapes, and usage notes.
+//
+
 import express from 'express';
 import cors from 'cors';
 import { rateLimit } from 'express-rate-limit';
