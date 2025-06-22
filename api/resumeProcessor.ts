@@ -7,18 +7,17 @@ import { Request } from 'express';
 import { parseResumeWithAI } from './openai.js';
 
 // We'll import these dynamically to avoid initialization issues
-// with pdf-parse looking for test files at startup
-let pdfParse: any;
+let pdfjsLib: any;
 let mammoth: any;
 
 // Try to import the modules at runtime using dynamic import
 (async () => {
   try {
     // Using dynamic imports for ES modules
-    const pdfParseModule = await import('pdf-parse');
+    const pdfjsModule = await import('pdfjs-dist');
     const mammothModule = await import('mammoth');
     
-    pdfParse = pdfParseModule.default;
+    pdfjsLib = pdfjsModule;
     mammoth = mammothModule.default;
     console.log('Document parser modules loaded successfully');
   } catch (err) {
@@ -29,12 +28,12 @@ let mammoth: any;
 
 // Function to ensure modules are loaded before use
 async function ensureModulesLoaded() {
-  if (!pdfParse || !mammoth) {
+  if (!pdfjsLib || !mammoth) {
     try {
-      const pdfParseModule = await import('pdf-parse');
+      const pdfjsModule = await import('pdfjs-dist');
       const mammothModule = await import('mammoth');
       
-      pdfParse = pdfParseModule.default;
+      pdfjsLib = pdfjsModule;
       mammoth = mammothModule.default;
     } catch (err) {
       console.error('Failed to load document parser modules:', err);
@@ -89,8 +88,14 @@ async function extractTextFromPDF(filePath: string): Promise<string> {
   try {
     await ensureModulesLoaded();
     const dataBuffer = fs.readFileSync(filePath);
-    const data = await pdfParse(dataBuffer);
-    return data.text;
+    const data = await pdfjsLib.getDocument(dataBuffer).promise;
+    let text = '';
+    for (let i = 1; i <= data.numPages; i++) {
+      const page = await data.getPage(i);
+      const textContent = await page.getTextContent();
+      text += textContent.items.map((item: any) => item.str).join('\n');
+    }
+    return text;
   } catch (error) {
     console.error('Error extracting text from PDF:', error);
     throw new Error('Failed to extract text from PDF');
