@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import PageLayout from "@/components/layout/PageLayout";
+import PublicPageLayout from "@/components/layout/PublicPageLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -89,7 +89,7 @@ export default function Privacy() {
   };
 
   return (
-    <PageLayout title="Privacy Policy">
+    <PublicPageLayout title="Privacy Policy">
       <div className="mt-6 space-y-8 max-w-4xl mx-auto">
         <Card>
           <CardHeader>
@@ -244,6 +244,6 @@ export default function Privacy() {
           </p>
         </div>
       </div>
-    </PageLayout>
+    </PublicPageLayout>
   );
 }

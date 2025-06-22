@@ -66,7 +66,7 @@ export default function Login() {
         <div className="flex justify-center mb-6">
           <div className="flex items-center bg-card p-3 rounded-full code-glow">
             <CheckCircle className="w-8 h-8 text-primary" />
-            <span className="text-2xl font-bold text-foreground ml-2 tracking-tight">Job<span className="neon-text">Fillr</span></span>
+            <span className="text-2xl font-bold text-foreground ml-2 tracking-tight">App<span className="neon-text">Buddy</span></span>
           </div>
         </div>
         

@@ -1,9 +1,9 @@
-import PageLayout from "@/components/layout/PageLayout";
+import PublicPageLayout from "@/components/layout/PublicPageLayout";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function TermsPage() {
   return (
-    <PageLayout title="Terms of Service">
+    <PublicPageLayout title="Terms of Service">
       <div className="max-w-4xl mx-auto py-8">
         <Card>
           <CardContent className="p-8">
@@ -154,6 +154,6 @@ export default function TermsPage() {
           </CardContent>
         </Card>
       </div>
-    </PageLayout>
+    </PublicPageLayout>
   );
 } 

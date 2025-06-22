@@ -11,6 +11,7 @@ import Settings from "@/pages/settings";
 import Help from "@/pages/help";
 import Privacy from "@/pages/privacy";
 import Terms from "@/pages/terms";
+import Status from "@/pages/status";
 import Login from "@/pages/auth/login";
 import Register from "@/pages/auth/register";
 import { useAuth } from "@/contexts/AuthContext";
@@ -57,6 +58,20 @@ function PublicRoute({ component: Component }: { component: React.ComponentType 
   return <Component />;
 }
 
+function PublicPage({ component: Component }: { component: React.ComponentType }) {
+  const { isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return <Component />;
+}
+
 function Router() {
   const { currentUser, isLoading } = useAuth();
 
@@ -70,19 +85,32 @@ function Router() {
 
   return (
     <Switch>
-      {/* Public routes - redirect to dashboard if authenticated */}
+      {/* Landing page - accessible to all users */}
       <Route path="/">
-        {() => <PublicRoute component={LandingPage} />}
+        {() => <PublicPage component={LandingPage} />}
       </Route>
+      
+      {/* Auth routes - redirect to dashboard if authenticated */}
       <Route path="/login">
         {() => <PublicRoute component={Login} />}
       </Route>
       <Route path="/register">
         {() => <PublicRoute component={Register} />}
       </Route>
-      <Route path="/privacy" component={Privacy} />
-      <Route path="/terms" component={Terms} />
-      <Route path="/help" component={Help} />
+      
+      {/* Public pages - accessible to all users */}
+      <Route path="/privacy">
+        {() => <PublicPage component={Privacy} />}
+      </Route>
+      <Route path="/terms">
+        {() => <PublicPage component={Terms} />}
+      </Route>
+      <Route path="/help">
+        {() => <PublicPage component={Help} />}
+      </Route>
+      <Route path="/status">
+        {() => <PublicPage component={Status} />}
+      </Route>
       
       {/* Protected routes - require authentication */}
       <Route path="/dashboard">

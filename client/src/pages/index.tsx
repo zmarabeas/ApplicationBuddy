@@ -97,7 +97,7 @@ export default function LandingPage() {
             transition={{ duration: 0.8 }}
             className="text-center"
           >
-            <Badge variant="secondary" className="mb-6">
+            <Badge className="mb-6">
               <Chrome className="w-4 h-4 mr-2" />
               Chrome Extension Available
             </Badge>
@@ -158,21 +158,6 @@ export default function LandingPage() {
               )}
             </div>
 
-            {/* Social Proof */}
-            <div className="flex items-center justify-center space-x-8 text-muted-foreground">
-              <div className="flex items-center space-x-2">
-                <Users className="w-5 h-5" />
-                <span>10,000+ Users</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Star className="w-5 h-5 text-yellow-500 fill-current" />
-                <span>4.8/5 Rating</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <TrendingUp className="w-5 h-5" />
-                <span>95% Success Rate</span>
-              </div>
-            </div>
           </motion.div>
         </div>
       </section>
@@ -408,37 +393,37 @@ export default function LandingPage() {
             <div>
               <h3 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase mb-4">Product</h3>
               <ul className="space-y-3">
-                <li><a href="#" className="text-base text-muted-foreground hover:text-foreground transition-colors">Features</a></li>
-                <li><a href="#" className="text-base text-muted-foreground hover:text-foreground transition-colors">Pricing</a></li>
-                <li><a href="#" className="text-base text-muted-foreground hover:text-foreground transition-colors">Chrome Extension</a></li>
-                <li><a href="#" className="text-base text-muted-foreground hover:text-foreground transition-colors">API</a></li>
+                <li><button onClick={() => navigate('/help')} className="text-base text-muted-foreground hover:text-foreground transition-colors">Features</button></li>
+                <li><button onClick={() => navigate('/help')} className="text-base text-muted-foreground hover:text-foreground transition-colors">Pricing</button></li>
+                <li><button onClick={() => navigate('/help')} className="text-base text-muted-foreground hover:text-foreground transition-colors">Chrome Extension</button></li>
+                <li><button onClick={() => navigate('/help')} className="text-base text-muted-foreground hover:text-foreground transition-colors">API</button></li>
               </ul>
             </div>
             <div>
               <h3 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase mb-4">Company</h3>
               <ul className="space-y-3">
-                <li><a href="#" className="text-base text-muted-foreground hover:text-foreground transition-colors">About Us</a></li>
-                <li><a href="#" className="text-base text-muted-foreground hover:text-foreground transition-colors">Blog</a></li>
-                <li><a href="#" className="text-base text-muted-foreground hover:text-foreground transition-colors">Careers</a></li>
-                <li><a href="#" className="text-base text-muted-foreground hover:text-foreground transition-colors">Press</a></li>
+                <li><button onClick={() => navigate('/help')} className="text-base text-muted-foreground hover:text-foreground transition-colors">About Us</button></li>
+                <li><button onClick={() => navigate('/help')} className="text-base text-muted-foreground hover:text-foreground transition-colors">Blog</button></li>
+                <li><button onClick={() => navigate('/help')} className="text-base text-muted-foreground hover:text-foreground transition-colors">Careers</button></li>
+                <li><button onClick={() => navigate('/help')} className="text-base text-muted-foreground hover:text-foreground transition-colors">Press</button></li>
               </ul>
             </div>
             <div>
               <h3 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase mb-4">Legal</h3>
               <ul className="space-y-3">
-                <li><a href="/privacy" className="text-base text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</a></li>
-                <li><a href="/terms" className="text-base text-muted-foreground hover:text-foreground transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="text-base text-muted-foreground hover:text-foreground transition-colors">Cookie Policy</a></li>
-                <li><a href="#" className="text-base text-muted-foreground hover:text-foreground transition-colors">GDPR</a></li>
+                <li><button onClick={() => navigate('/privacy')} className="text-base text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</button></li>
+                <li><button onClick={() => navigate('/terms')} className="text-base text-muted-foreground hover:text-foreground transition-colors">Terms of Service</button></li>
+                <li><button onClick={() => navigate('/help')} className="text-base text-muted-foreground hover:text-foreground transition-colors">Cookie Policy</button></li>
+                <li><button onClick={() => navigate('/help')} className="text-base text-muted-foreground hover:text-foreground transition-colors">GDPR</button></li>
               </ul>
             </div>
             <div>
               <h3 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase mb-4">Support</h3>
               <ul className="space-y-3">
-                <li><a href="/help" className="text-base text-muted-foreground hover:text-foreground transition-colors">Help Center</a></li>
-                <li><a href="#" className="text-base text-muted-foreground hover:text-foreground transition-colors">Contact Us</a></li>
-                <li><a href="#" className="text-base text-muted-foreground hover:text-foreground transition-colors">Status</a></li>
-                <li><a href="#" className="text-base text-muted-foreground hover:text-foreground transition-colors">Community</a></li>
+                <li><button onClick={() => navigate('/help')} className="text-base text-muted-foreground hover:text-foreground transition-colors">Help Center</button></li>
+                <li><button onClick={() => navigate('/help')} className="text-base text-muted-foreground hover:text-foreground transition-colors">Contact Us</button></li>
+                <li><button onClick={() => navigate('/status')} className="text-base text-muted-foreground hover:text-foreground transition-colors">Status</button></li>
+                <li><button onClick={() => navigate('/help')} className="text-base text-muted-foreground hover:text-foreground transition-colors">Community</button></li>
               </ul>
             </div>
           </div>
@@ -452,15 +437,15 @@ export default function LandingPage() {
             </div>
             
             <div className="flex items-center space-x-6">
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+              <button onClick={() => navigate('/help')} className="text-muted-foreground hover:text-foreground transition-colors">
                 <Mail className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+              </button>
+              <button onClick={() => navigate('/help')} className="text-muted-foreground hover:text-foreground transition-colors">
                 <Github className="w-5 h-5" />
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+              </button>
+              <button onClick={() => navigate('/help')} className="text-muted-foreground hover:text-foreground transition-colors">
                 <Linkedin className="w-5 h-5" />
-              </a>
+              </button>
             </div>
           </div>
           

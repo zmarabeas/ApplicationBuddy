@@ -1,4 +1,4 @@
-import PageLayout from "@/components/layout/PageLayout";
+import PublicPageLayout from "@/components/layout/PublicPageLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Accordion,
@@ -11,7 +11,7 @@ import { HelpCircle, FileText, Download, Mail } from "lucide-react";
 
 export default function Help() {
   return (
-    <PageLayout title="Help & Support">
+    <PublicPageLayout title="Help & Support">
       <div className="mt-6 space-y-6 max-w-3xl">
         {/* Quick Links */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -168,6 +168,6 @@ export default function Help() {
           </CardContent>
         </Card>
       </div>
-    </PageLayout>
+    </PublicPageLayout>
   );
 }
