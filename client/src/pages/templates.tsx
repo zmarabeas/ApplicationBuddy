@@ -61,7 +61,7 @@ const TemplatesPage: React.FC = () => {
 
   // Fetch all templates
   const { data: templatesData, isLoading: templatesLoading } = useQuery({
-    queryKey: ['/api/templates'],
+    queryKey: ['/api/questions'],
     staleTime: 60000,
   });
 
@@ -144,14 +144,12 @@ const TemplatesPage: React.FC = () => {
   const templatesByCategory: Record<string, Template[]> = {};
   
   // Type guard to ensure templatesData has the correct structure
-  interface TemplatesResponse { templates: Template[] }
-  
-  const hasTemplates = (data: any): data is TemplatesResponse => {
-    return data && Array.isArray(data.templates);
+  const hasTemplates = (data: any): data is Template[] => {
+    return Array.isArray(data);
   };
   
   if (hasTemplates(templatesData)) {
-    templatesData.templates.forEach((template: Template) => {
+    templatesData.forEach((template: Template) => {
       if (!templatesByCategory[template.category]) {
         templatesByCategory[template.category] = [];
       }

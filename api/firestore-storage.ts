@@ -1,28 +1,27 @@
-import admin from 'firebase-admin';
-import { IStorage } from './storage';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import type { ServiceAccount } from 'firebase-admin';
+import { IStorage } from './storage.js';
 import { 
   InsertUser, User, Profile, WorkExperience, Education, Resume,
   QuestionTemplate, UserAnswer, QuestionTemplateData, UserAnswerData
-} from '@shared/schema';
+} from './schema.js';
 
 // Initialize Firebase Admin if not already initialized
-if (!admin.apps.length) {
-  try {
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.VITE_FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
-    });
-    console.log("Firebase Admin initialized successfully in firestore-storage");
-  } catch (error) {
-    console.error("Firebase Admin initialization error in firestore-storage:", error);
-  }
+if (!getApps().length) {
+  const credentialObject: ServiceAccount = {
+    projectId: process.env.FIREBASE_PROJECT_ID || "jobassist-xmxdx",
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  };
+
+  initializeApp({
+    credential: cert(credentialObject),
+  });
 }
 
 // Get Firestore instance
-const db = admin.firestore();
+const db = getFirestore();
 
 // Define Firestore collections
 const USERS_COLLECTION = 'users';
@@ -32,6 +31,16 @@ const EDUCATIONS_COLLECTION = 'educations';
 const RESUMES_COLLECTION = 'resumes';
 const QUESTION_TEMPLATES_COLLECTION = 'questionTemplates';
 const USER_ANSWERS_COLLECTION = 'userAnswers';
+
+// Add transaction helper
+async function runInTransaction<T>(operation: (transaction: FirebaseFirestore.Transaction) => Promise<T>): Promise<T> {
+  try {
+    return await db.runTransaction(operation);
+  } catch (error) {
+    console.error('Transaction error:', error);
+    throw error;
+  }
+}
 
 export class FirestoreStorage implements IStorage {
   // This allows us to use session-related functions from Express
@@ -123,14 +132,14 @@ export class FirestoreStorage implements IStorage {
           userId,
           filename: resumeData.filename,
           fileType: resumeData.fileType,
-          uploadedAt: admin.firestore.FieldValue.serverTimestamp()
+          uploadedAt: FieldValue.serverTimestamp()
         });
 
         // 2. Update personal info if available
         if (resumeData.parsedData.personalInfo) {
           transaction.update(profileRef, {
             personalInfo: resumeData.parsedData.personalInfo,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            updatedAt: FieldValue.serverTimestamp()
           });
         }
 
@@ -164,8 +173,8 @@ export class FirestoreStorage implements IStorage {
                 endDate: workExp.endDate || null,
                 current: workExp.current || false,
                 description: workExp.description || null,
-                createdAt: admin.firestore.FieldValue.serverTimestamp(),
-                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                createdAt: FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp()
               });
             }
           }
@@ -201,8 +210,8 @@ export class FirestoreStorage implements IStorage {
                 endDate: education.endDate || null,
                 current: education.current || false,
                 description: education.description || null,
-                createdAt: admin.firestore.FieldValue.serverTimestamp(),
-                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                createdAt: FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp()
               });
             }
           }
@@ -212,7 +221,7 @@ export class FirestoreStorage implements IStorage {
         if (skillsToUpdate) {
           transaction.update(profileRef, {
             skills: skillsToUpdate,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            updatedAt: FieldValue.serverTimestamp()
           });
         }
 
@@ -279,7 +288,7 @@ export class FirestoreStorage implements IStorage {
         personalInfo: null,
         skills: null,
         completionPercentage: 0,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        updatedAt: FieldValue.serverTimestamp()
       });
       
       console.log(`Successfully reset profile for user ID: ${userId}`);
@@ -361,9 +370,10 @@ export class FirestoreStorage implements IStorage {
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    try {
-      // Get the next ID (in a real app, you'd use a transaction for this)
-      const counterDoc = await db.collection('counters').doc('users').get();
+    return runInTransaction(async (transaction) => {
+      // Get the next ID
+      const counterRef = db.collection('counters').doc('users');
+      const counterDoc = await transaction.get(counterRef);
       let nextId = 1;
       
       if (counterDoc.exists) {
@@ -371,29 +381,26 @@ export class FirestoreStorage implements IStorage {
       }
       
       // Update the counter
-      await db.collection('counters').doc('users').set({ value: nextId });
+      transaction.set(counterRef, { value: nextId });
       
       // Create the user with the auto-incrementing ID
       const newUser = {
         ...user,
         id: nextId,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp()
       };
       
-      await db.collection(USERS_COLLECTION).doc(nextId.toString()).set(newUser);
+      const userRef = db.collection(USERS_COLLECTION).doc(nextId.toString());
+      transaction.set(userRef, newUser);
       
-      // Use type assertion to handle Firestore timestamp vs Date typing
       return { 
         ...newUser, 
         lastLogin: null, 
         createdAt: null, 
         updatedAt: null 
       } as unknown as User;
-    } catch (error) {
-      console.error('Error creating user:', error);
-      throw error;
-    }
+    });
   }
 
   async updateUser(id: number, userData: Partial<User>): Promise<User> {
@@ -407,7 +414,7 @@ export class FirestoreStorage implements IStorage {
       
       const updatedData = {
         ...userData,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        updatedAt: FieldValue.serverTimestamp()
       };
       
       await userRef.update(updatedData);
@@ -415,10 +422,13 @@ export class FirestoreStorage implements IStorage {
       const updatedUser = {
         ...snapshot.data(),
         ...updatedData,
-        id
+        id,
+        updatedAt: new Date(),
+        createdAt: snapshot.data()?.createdAt?.toDate() || null,
+        lastLogin: snapshot.data()?.lastLogin?.toDate() || null
       };
       
-      return updatedUser as User;
+      return updatedUser as unknown as User;
     } catch (error) {
       console.error('Error updating user:', error);
       throw error;
@@ -463,8 +473,8 @@ export class FirestoreStorage implements IStorage {
         personalInfo: null,
         skills: [],
         completionPercentage: 0,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp()
       };
       
       await db.collection(PROFILES_COLLECTION).doc(nextId.toString()).set(newProfile);
@@ -492,7 +502,7 @@ export class FirestoreStorage implements IStorage {
       
       const updatedData = {
         ...data,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        updatedAt: FieldValue.serverTimestamp()
       };
       
       await profileRef.update(updatedData);
@@ -522,7 +532,7 @@ export class FirestoreStorage implements IStorage {
       
       const updatedData = {
         personalInfo,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        updatedAt: FieldValue.serverTimestamp()
       };
       
       await profileRef.update(updatedData);
@@ -569,7 +579,7 @@ export class FirestoreStorage implements IStorage {
       
       const updatedData = {
         skills: normalizedSkills,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        updatedAt: FieldValue.serverTimestamp()
       };
       
       await profileRef.update(updatedData);
@@ -594,15 +604,15 @@ export class FirestoreStorage implements IStorage {
   }
 
   async updateProfileCompletionPercentage(profileId: number): Promise<number> {
-    try {
+    return runInTransaction(async (transaction) => {
       const profileRef = db.collection(PROFILES_COLLECTION).doc(profileId.toString());
-      const snapshot = await profileRef.get();
+      const profileDoc = await transaction.get(profileRef);
       
-      if (!snapshot.exists) {
+      if (!profileDoc.exists) {
         throw new Error(`Profile with ID ${profileId} not found`);
       }
       
-      const profileData = snapshot.data();
+      const profileData = profileDoc.data();
       let completionPercentage = 0;
       let totalFields = 0;
       let completedFields = 0;
@@ -676,17 +686,14 @@ export class FirestoreStorage implements IStorage {
         completionPercentage = Math.round((completedFields / totalFields) * 100);
       }
       
-      // Update profile with new completion percentage
-      await profileRef.update({
+      // Update the profile with new completion percentage
+      transaction.update(profileRef, {
         completionPercentage,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        updatedAt: FieldValue.serverTimestamp()
       });
       
       return completionPercentage;
-    } catch (error) {
-      console.error('Error calculating profile completion percentage:', error);
-      throw error;
-    }
+    });
   }
 
   // Work Experience operations
@@ -751,8 +758,8 @@ export class FirestoreStorage implements IStorage {
         id: nextId,
         userId,
         profileId,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp()
       };
       
       await db.collection(WORK_EXPERIENCES_COLLECTION).doc(nextId.toString()).set(newWorkExp);
@@ -778,7 +785,7 @@ export class FirestoreStorage implements IStorage {
       
       const updatedData = {
         ...workExp,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        updatedAt: FieldValue.serverTimestamp()
       };
       
       await workExpRef.update(updatedData);
@@ -890,8 +897,8 @@ export class FirestoreStorage implements IStorage {
         id: nextId,
         userId,
         profileId,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp()
       };
       
       await db.collection(EDUCATIONS_COLLECTION).doc(nextId.toString()).set(newEducation);
@@ -917,7 +924,7 @@ export class FirestoreStorage implements IStorage {
       
       const updatedData = {
         ...education,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        updatedAt: FieldValue.serverTimestamp()
       };
       
       await educationRef.update(updatedData);
@@ -1016,7 +1023,7 @@ export class FirestoreStorage implements IStorage {
         ...resume,
         id: nextId,
         userId,
-        uploadedAt: admin.firestore.FieldValue.serverTimestamp()
+        uploadedAt: FieldValue.serverTimestamp()
       };
       
       await db.collection(RESUMES_COLLECTION).doc(nextId.toString()).set(newResume);
@@ -1135,8 +1142,8 @@ export class FirestoreStorage implements IStorage {
         options: template.options || null,
         description: template.description || null,
         commonFields: template.commonFields || null,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp()
       };
       
       await db.collection(QUESTION_TEMPLATES_COLLECTION).doc(nextId.toString()).set(templateData);
@@ -1163,7 +1170,7 @@ export class FirestoreStorage implements IStorage {
       
       const updateData = {
         ...template,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        updatedAt: FieldValue.serverTimestamp()
       };
       
       await templateRef.update(updateData);
@@ -1272,8 +1279,8 @@ export class FirestoreStorage implements IStorage {
           userId,
           templateId: answer.templateId,
           answer: answer.answer,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp()
         };
         
         await db.collection(USER_ANSWERS_COLLECTION).doc(nextId.toString()).set(answerData);
@@ -1301,7 +1308,7 @@ export class FirestoreStorage implements IStorage {
       
       const updateData = {
         ...answer,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        updatedAt: FieldValue.serverTimestamp()
       };
       
       await answerRef.update(updateData);

@@ -2,10 +2,10 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "module": "ESNext",
-    "target": "ESNext",
+    "target": "ES2020",
     "outDir": "dist",
-    "moduleResolution": "bundler",
-    "noEmit": false,
+    "moduleResolution": "node",
+    "noEmit": true,
     "isolatedModules": true,
     "strict": true,
     "noUnusedLocals": false,
@@ -18,7 +18,9 @@
     "paths": {
       "@shared/*": ["./shared/*"],
       "@api/*": ["./api/*"]
-    }
+    },
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": true
   },
   "include": ["api/**/*", "shared/**/*"],
   "exclude": ["node_modules", "client", "dist"]

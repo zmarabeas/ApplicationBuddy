@@ -69,14 +69,44 @@ export const userAnswerSchema = z.object({
 
 // Types for Firestore data
 export type PersonalInfo = z.infer<typeof personalInfoSchema>;
-export type WorkExperience = z.infer<typeof workExperienceSchema>;
-export type Education = z.infer<typeof educationSchema>;
+export type WorkExperience = {
+  id: number;
+  company: string;
+  title: string;
+  location?: string;
+  startDate?: string;
+  endDate?: string;
+  current?: boolean;
+  description?: string;
+};
+export type Education = {
+  id: number;
+  institution: string;
+  degree?: string;
+  field?: string;
+  startDate?: string;
+  endDate?: string;
+  current?: boolean;
+  description?: string;
+};
 export type Profile = z.infer<typeof profileSchema> & { id: number, userId: number };
 export type Resume = z.infer<typeof resumeSchema> & { id: number, userId: number };
-export type QuestionTemplate = z.infer<typeof questionTemplateSchema> & { id: number };
+export type QuestionTemplate = QuestionTemplateData & {
+  id: number;
+  createdAt: Date;
+  updatedAt: Date;
+};
 export type UserAnswer = z.infer<typeof userAnswerSchema> & { id: number, userId: number };
 
 // Insert types for creating new records
 export type InsertUser = { email: string; username: string; displayName: string; password: string | null; firebaseUID: string; photoURL: string | null; authProvider: string };
-export type QuestionTemplateData = z.infer<typeof questionTemplateSchema>;
-export type UserAnswerData = z.infer<typeof userAnswerSchema>;
+export type User = InsertUser & { id: number; createdAt: Date | null; updatedAt: Date | null; lastLogin: Date | null };
+export type QuestionTemplateData = {
+  category: string;
+  question: string;
+  questionType: string;
+  options?: { value: string; label: string; }[];
+  description?: string;
+  commonFields?: string[];
+};
+export type UserAnswerData = z.infer<typeof userAnswerSchema>; 
