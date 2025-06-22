@@ -1,4 +1,4 @@
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue, Transaction, DocumentSnapshot, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import type { ServiceAccount } from 'firebase-admin';
 import { IStorage } from './storage.js';
@@ -33,7 +33,7 @@ const QUESTION_TEMPLATES_COLLECTION = 'questionTemplates';
 const USER_ANSWERS_COLLECTION = 'userAnswers';
 
 // Add transaction helper
-async function runInTransaction<T>(operation: (transaction: FirebaseFirestore.Transaction) => Promise<T>): Promise<T> {
+async function runInTransaction<T>(operation: (transaction: Transaction) => Promise<T>): Promise<T> {
   try {
     return await db.runTransaction(operation);
   } catch (error) {
@@ -80,13 +80,13 @@ export class FirestoreStorage implements IStorage {
       const workExpsSnapshot = await db.collection(WORK_EXPERIENCES_COLLECTION)
         .where('profileId', '==', profile.id)
         .get();
-      const existingWorkExps = workExpsSnapshot.docs.map(doc => doc.data());
+      const existingWorkExps = workExpsSnapshot.docs.map((doc: QueryDocumentSnapshot) => doc.data());
       
       // Get existing educations for comparison
       const educationsSnapshot = await db.collection(EDUCATIONS_COLLECTION)
         .where('profileId', '==', profile.id)
         .get();
-      const existingEducations = educationsSnapshot.docs.map(doc => doc.data());
+      const existingEducations = educationsSnapshot.docs.map((doc: QueryDocumentSnapshot) => doc.data());
       
       // Pre-process skills data
       let skillsToUpdate = null;

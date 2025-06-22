@@ -14,7 +14,6 @@ export default function ResumeUploadCard() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const { updatePersonalInfo, addWorkExperience, addEducation, updateSkills } = useProfile();
 
   const uploadResumeMutation = useMutation({
     mutationFn: async (data: { 
