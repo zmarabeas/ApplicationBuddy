@@ -2,62 +2,205 @@
 
 All notable changes to ApplicationBuddy will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [2.0.1] - 2025-01-24
 
-## [Unreleased]
+### **Bug Fixes**
 
-### Added
-- New dependency `@rollup/rollup-linux-x64-gnu` for Vercel deployment
-- Standardized error handling middleware
-- Transaction support for Firestore operations
-- Enhanced CORS configuration for API endpoints
+- **Fixed Dynamic Import Module Loading Error**
 
-### Fixed
-- Firebase initialization with correct credential properties
-- Type errors in WorkExperience and Education interfaces
-- Import path issues in API routes
-- Optional dependencies installation in Vercel deployment
+  - Resolved `TypeError: Failed to fetch dynamically imported module` error
+  - Replaced dynamic imports with regular imports in client-side code
+  - Updated Vite configuration for better module chunking
+  - Fixed Firebase authentication token retrieval in resume uploader
+  - Improved build optimization with proper vendor and Firebase chunking
 
-### Changed
-- Updated Firebase Admin SDK initialization
-- Improved error handling patterns
-- Enhanced API response formats
-- Modified build configuration for Vercel
+- **Resume Upload Improvements**
 
-### Security
-- Enhanced CORS configuration
-- Improved API validation
-- Updated security headers
-- Strengthened authentication checks
+  - Fixed API endpoint to properly handle file uploads using multer
+  - Updated resume processing to use uploaded file path instead of request body
+  - Improved error handling and validation for file uploads
 
-## [0.1.0] - 2024-03-20
+- **Build Configuration Updates**
+  - Added Firebase modules to manual chunks for better caching
+  - Increased chunk size warning limit to 1000KB
+  - Added CommonJS options for better module resolution
+  - Updated build scripts with clean build option
 
-### Added
-- Initial project setup with Next.js
-- Firebase integration
-- Basic authentication system
-- User profile management
-- Work experience tracking
-- Education history
-- Resume upload and parsing
-- Browser extension foundation
-- API endpoints for data management
-- Basic UI components
-- Error handling middleware
-- Type definitions
-- Development documentation
+## [2.0.0] - 2025-01-24
 
-### Security
-- Firebase authentication
-- API route protection
-- CORS configuration
-- Input validation
-- Rate limiting
+### **PHASE 2 COMPLETE - CORE PLATFORM LAUNCH**
+
+#### **Major Features Completed**
+
+- **Complete Profile Management System**
+
+  - User authentication with Firebase Auth
+  - Profile creation and management with completion tracking
+  - Work experience management (CRUD operations)
+  - Education management (CRUD operations)
+  - Skills management with dynamic arrays
+  - Real-time completion percentage calculation
+
+- **AI-Powered Resume Processing**
+
+  - PDF and DOCX file upload and parsing
+  - OpenAI integration for intelligent data extraction
+  - Automatic profile population from resume data
+  - Duplicate detection and smart merging
+  - Firebase Storage integration for file management
+
+- **Modern Web Application**
+
+  - React 18 with TypeScript
+  - Vite build system for fast development
+  - Tailwind CSS with custom design system
+  - Radix UI components for accessibility
+  - Responsive design for all devices
+  - Dark/light theme support
+
+- **Robust Backend Infrastructure**
+  - Serverless API with Vercel deployment
+  - Firebase Admin SDK integration
+  - Firestore database with proper indexing
+  - RESTful API with 20+ endpoints
+  - Comprehensive error handling
+  - JWT authentication and CORS
+
+#### **Technical Improvements**
+
+- **Deployment & Infrastructure**
+
+  - Fixed Vercel deployment issues
+  - Resolved Firebase initialization problems
+  - Added proper environment variable handling
+  - Implemented serverless function architecture
+  - Added comprehensive logging and debugging
+
+- **Data Management**
+
+  - Fixed Firestore timestamp conversion issues
+  - Implemented proper data validation with Zod
+  - Added real-time data synchronization
+  - Optimized database queries and indexing
+  - Added data export and deletion capabilities
+
+- **User Experience**
+  - Fixed completion percentage display issues
+  - Added loading states and error handling
+  - Implemented form validation and feedback
+  - Added toast notifications for user actions
+  - Improved responsive design and accessibility
+
+#### **Bug Fixes**
+
+- Fixed Firebase duplicate initialization errors
+- Resolved PDF parser initialization issues
+- Fixed timestamp conversion for frontend compatibility
+- Resolved profile completion percentage calculation
+- Fixed API endpoint routing and authentication
+- Resolved data structure mismatches between frontend and backend
+
+#### **Documentation**
+
+- Updated API reference with all endpoints
+- Created comprehensive deployment guide
+- Added security policy and best practices
+- Updated contributing guidelines
+- Created bug tracking system
+
+---
+
+## [1.5.0] - 2025-01-20
+
+### **Infrastructure Improvements**
+
+- Migrated from Next.js to Vite for better performance
+- Implemented serverless API architecture
+- Added Firebase Admin SDK integration
+- Fixed deployment configuration issues
+
+### **Bug Fixes**
+
+- Resolved API routing issues
+- Fixed authentication middleware
+- Corrected data validation schemas
+
+---
+
+## [1.0.0] - 2025-01-15
+
+### **Initial Release**
+
+- Basic project structure
+- Firebase integration setup
+- Initial API endpoints
+- Basic frontend components
+
+---
+
+## **Upcoming Releases**
+
+### [3.0.0] - Phase 3: Landing Page & Marketing
+
+- Modern landing page design
+- Feature showcase and demos
+- SEO optimization
+- Marketing copy and CTAs
+
+### [4.0.0] - Phase 4: Browser Extension
+
+- Chrome extension development
+- Form auto-fill functionality
+- Profile integration
+- Cross-browser compatibility
+
+### [5.0.0] - Phase 5: AI Enhancement
+
+- Common questions database
+- Answer templates
+- Cover letter generation
+- Interview preparation tools
+
+### [6.0.0] - Phase 6: Testing & Polish
+
+- End-to-end testing suite
+- Performance optimization
+- User testing and feedback
+- Bug fixes and refinements
+
+### [7.0.0] - Phase 7: Monetization
+
+- Payment integration
+- Subscription tiers
+- Usage tracking
+- Analytics dashboard
+
+---
+
+## **Version Format**
+
+We use [Semantic Versioning](https://semver.org/) for version numbers:
+
+- **MAJOR** version for incompatible API changes
+- **MINOR** version for added functionality in a backwards compatible manner
+- **PATCH** version for backwards compatible bug fixes
+
+## **Current Focus**
+
+**Phase 3: Landing Page Development**
+
+- Timeline: 1-2 weeks
+- Priority: High
+- Status: Planning
+
+---
+
+**Ready for the next phase!**
 
 ## Version History
 
 ### Version 0.1.0
+
 - Initial release
 - Basic functionality implemented
 - Core features available
@@ -66,6 +209,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Notes
 
 ### Changelog Format
+
 - `Added` for new features
 - `Changed` for changes in existing functionality
 - `Deprecated` for soon-to-be removed features
@@ -74,11 +218,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Security` for security improvements
 
 ### Versioning
+
 - MAJOR version for incompatible API changes
 - MINOR version for backwards-compatible functionality
 - PATCH version for backwards-compatible bug fixes
 
 ### Release Process
+
 1. Update version in package.json
 2. Update CHANGELOG.md
 3. Create release tag
@@ -86,6 +232,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 5. Update documentation
 
 ### Future Plans
+
 - Enhanced user interface
 - Additional browser extension features
 - Improved data analysis
@@ -93,4 +240,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integration with job boards
 - Performance optimizations
 - Extended API capabilities
-- Enhanced security features 
+- Enhanced security features

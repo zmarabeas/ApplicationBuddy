@@ -33,13 +33,22 @@ export default defineConfig({
             'date-fns',
             'lodash',
             'uuid'
+          ],
+          'firebase': [
+            'firebase/auth',
+            'firebase/firestore',
+            'firebase/storage'
           ]
         }
       }
     },
-    chunkSizeWarningLimit: 500,
-    minify: true,
-    sourcemap: false
+    chunkSizeWarningLimit: 1000,
+    minify: 'terser',
+    sourcemap: false,
+    target: 'es2015',
+    commonjsOptions: {
+      include: [/node_modules/]
+    }
   },
   optimizeDeps: {
     include: [
@@ -52,8 +61,12 @@ export default defineConfig({
       'zod',
       'date-fns',
       'lodash',
-      'uuid'
-    ]
+      'uuid',
+      'firebase/auth',
+      'firebase/firestore',
+      'firebase/storage'
+    ],
+    exclude: ['fsevents']
   },
   server: {
     port: process.env.PORT ? parseInt(process.env.PORT) : 3000,

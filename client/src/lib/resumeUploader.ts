@@ -3,6 +3,8 @@
  * This file handles resume upload without any dependency on ProfileContext
  */
 
+import { getAuth } from 'firebase/auth';
+
 /**
  * Upload and process a resume
  * This sends the file to the server, which will:
@@ -79,8 +81,6 @@ export async function deleteResume(id: number): Promise<void> {
  * This is used for authentication with the API
  */
 async function getFirebaseToken(): Promise<string> {
-  // Import Firebase auth dynamically to avoid circular dependencies
-  const { getAuth } = await import('firebase/auth');
   const auth = getAuth();
   
   // Check if user is signed in

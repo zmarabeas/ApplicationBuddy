@@ -5,7 +5,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { firestoreStorage } from './firestore-storage.js';
-import { processResumeFile } from './resumeProcessor.js';
+import { upload, processResumeFile } from './resumeProcessor.js';
 import { parseResumeWithAI } from './openai.js';
 import { seedTemplates } from './seed-templates.js';
 import { config } from './config.js';
@@ -327,21 +327,49 @@ async function handleResumeProcess(req: any, res: any) {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
-    const { file, fileType } = req.body;
-    if (!file || !fileType) {
-      return res.status(400).json({ message: "No file or file type provided" });
-    }
+    // Use multer to handle file upload
+    upload.single('resume')(req, res, async (err) => {
+      if (err) {
+        console.error('File upload error:', err);
+        return res.status(400).json({ message: err.message });
+      }
 
-    const parsedData = await processResumeFile(file, fileType);
-    const resume = await firestoreStorage.addResume(userId, {
-      content: file,
-      parsedData: JSON.stringify(parsedData)
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      try {
+        // Get file type from the uploaded file
+        const fileType = req.file.originalname.split('.').pop()?.toLowerCase();
+        if (!fileType || !['pdf', 'docx'].includes(fileType)) {
+          return res.status(400).json({ message: "Invalid file type. Only PDF and DOCX files are allowed." });
+        }
+
+        // Process the resume file
+        const parsedData = await processResumeFile(req.file.path, fileType);
+        
+        // Save to Firestore
+        const resume = await firestoreStorage.addResume(userId, {
+          filename: req.file.originalname,
+          fileType: fileType,
+          parsedData: parsedData
+        });
+
+        res.json({
+          success: true,
+          resume: resume,
+          parsedData: parsedData
+        });
+      } catch (error) {
+        console.error('Error processing resume:', error);
+        res.status(500).json({ 
+          message: error instanceof Error ? error.message : 'Failed to process resume' 
+        });
+      }
     });
-
-    res.json(resume);
   } catch (error) {
-    console.error('Error processing resume:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error in resume process handler:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 }
 

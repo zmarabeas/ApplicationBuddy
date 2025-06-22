@@ -1,4 +1,5 @@
 import { apiRequest } from "./queryClient";
+import { getAuth } from "firebase/auth";
 
 export interface PersonalInfo {
   firstName: string;
@@ -74,15 +75,21 @@ export async function uploadAndParseResume(file: File): Promise<UploadResumeResp
   const formData = new FormData();
   formData.append('resume', file);
   
-  // Get authentication headers
-  const authHeaders = await apiRequest('POST', '', null, true) as Record<string, string>;
+  // Get Firebase authentication token
+  const auth = getAuth();
+  const user = auth.currentUser;
+  
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+  
+  const token = await user.getIdToken();
   
   const response = await fetch('/api/resume/process', {
     method: 'POST',
     credentials: 'include',
     headers: {
-      // Don't set Content-Type here, the browser will set it with the correct boundary for FormData
-      ...authHeaders
+      'Authorization': `Bearer ${token}`
     },
     body: formData,
   });

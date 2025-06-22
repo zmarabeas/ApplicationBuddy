@@ -1,287 +1,465 @@
 # Contributing to ApplicationBuddy
 
-## Overview
+Thank you for your interest in contributing to ApplicationBuddy! This document provides guidelines and information for contributors.
 
-Thank you for your interest in contributing to ApplicationBuddy! This document provides guidelines and instructions for contributing to the project.
+## **CURRENT PROJECT STATUS**
 
-## Getting Started
+**Phase 2 Complete** - Core platform is stable and deployed
+**Phase 3 Active** - Landing page development
 
-### Prerequisites
+### **Development Phases**
 
-1. **Development Environment**
-   - Node.js (v18 or later)
-   - npm (v8 or later)
-   - Git
-   - Firebase CLI
-   - Chrome/Firefox for extension development
+- **Phase 1-2:** Core platform (COMPLETE)
+- **Phase 3:** Landing page & marketing
+- **Phase 4:** Browser extension
+- **Phase 5:** AI enhancement
+- **Phase 6:** Testing & polish
+- **Phase 7:** Monetization
 
-2. **Accounts**
-   - GitHub account
-   - Firebase account
-   - Vercel account (for deployment)
+---
 
-### Setup
+## **GETTING STARTED**
 
-1. **Fork and Clone**
-   ```bash
-   # Fork the repository on GitHub
-   # Clone your fork
-   git clone https://github.com/your-username/applicationbuddy.git
-   cd applicationbuddy
-   ```
+### **Prerequisites**
 
-2. **Install Dependencies**
-   ```bash
-   # Install project dependencies
-   npm install
-   
-   # Install extension dependencies
-   cd extension
-   npm install
-   ```
+- Node.js 18+
+- npm or yarn
+- Git
+- Firebase project (for testing)
+- OpenAI API key (for AI features)
 
-3. **Environment Setup**
-   ```bash
-   # Copy environment template
-   cp .env.example .env.local
-   
-   # Configure environment variables
-   # See SETUP.md for required variables
-   ```
-
-## Development Workflow
-
-### 1. Branch Management
+### **Local Setup**
 
 ```bash
-# Create a new branch
-git checkout -b feature/your-feature-name
+# Clone the repository
+git clone https://github.com/your-username/ApplicationBuddy.git
+cd ApplicationBuddy
 
-# For bug fixes
-git checkout -b fix/issue-description
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your credentials
+
+# Start development server
+npm run dev
 ```
 
-### 2. Code Style
+### **Environment Variables**
 
-1. **TypeScript**
-   - Follow TypeScript best practices
-   - Use strict type checking
-   - Document complex types
+```env
+# Firebase Configuration
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_CLIENT_EMAIL=your-service-account-email
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com
 
-2. **React Components**
-   - Use functional components
-   - Implement proper prop types
-   - Follow React best practices
+# OpenAI Configuration
+OPENAI_API_KEY=sk-your-openai-api-key
 
-3. **Testing**
-   - Write unit tests for new features
-   - Maintain test coverage
-   - Follow testing best practices
+# Vercel Configuration
+VERCEL_URL=https://your-app.vercel.app
+```
 
-### 3. Commit Guidelines
+---
+
+## **CONTRIBUTION GUIDELINES**
+
+### **Code Standards**
+
+#### **TypeScript**
+
+- Use TypeScript for all new code
+- Define proper interfaces and types
+- Avoid `any` types - use proper typing
+- Use strict mode in `tsconfig.json`
+
+#### **React Components**
+
+- Use functional components with hooks
+- Follow React best practices
+- Use proper prop typing
+- Implement error boundaries where needed
+
+#### **Styling**
+
+- Use Tailwind CSS for styling
+- Follow mobile-first responsive design
+- Maintain consistent spacing and colors
+- Use CSS custom properties for theming
+
+#### **API Development**
+
+- Use Express.js for API routes
+- Implement proper error handling
+- Use Zod for request validation
+- Follow RESTful conventions
+
+### **File Structure**
+
+```
+ApplicationBuddy/
+├── api/                 # Backend API routes
+├── client/              # Frontend React app
+│   ├── src/
+│   │   ├── components/  # React components
+│   │   ├── pages/       # Page components
+│   │   ├── hooks/       # Custom hooks
+│   │   ├── lib/         # Utilities and config
+│   │   └── contexts/    # React contexts
+├── docs/                # Documentation
+├── extension/           # Browser extension
+└── shared/              # Shared types and utilities
+```
+
+### **Naming Conventions**
+
+- **Files:** kebab-case (`user-profile.tsx`)
+- **Components:** PascalCase (`UserProfile`)
+- **Functions:** camelCase (`getUserProfile`)
+- **Constants:** UPPER_SNAKE_CASE (`API_BASE_URL`)
+- **Types/Interfaces:** PascalCase (`UserProfile`)
+
+---
+
+## **DEVELOPMENT WORKFLOW**
+
+### **Branch Strategy**
 
 ```bash
-# Format: type(scope): description
+# Main branch (production-ready)
+main
 
-# Examples:
-feat(auth): add Google OAuth integration
-fix(api): resolve CORS issues
-docs(readme): update installation instructions
+# Development branch (integration)
+develop
+
+# Feature branches
+feature/landing-page
+feature/browser-extension
+feature/ai-enhancement
+
+# Bug fix branches
+fix/firebase-initialization
+fix/resume-parsing
 ```
 
-Types:
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation
-- `style`: Formatting
-- `refactor`: Code restructuring
-- `test`: Testing
-- `chore`: Maintenance
+### **Commit Message Format**
 
-### 4. Pull Request Process
+```
+type(scope): description
 
-1. **Before Submitting**
+feat(landing): add hero section with CTA
+fix(api): resolve Firebase initialization error
+docs(readme): update deployment instructions
+style(ui): improve button hover states
+refactor(auth): simplify authentication flow
+test(api): add unit tests for user endpoints
+```
+
+### **Pull Request Process**
+
+1. **Create Feature Branch**
+
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. **Make Changes**
+
+   - Write clean, documented code
+   - Add tests if applicable
    - Update documentation
-   - Add tests
-   - Ensure all tests pass
-   - Update changelog
 
-2. **PR Description**
-   ```markdown
-   ## Description
-   Brief description of changes
+3. **Test Locally**
 
-   ## Related Issues
-   Fixes #123
-
-   ## Type of Change
-   - [ ] Bug fix
-   - [ ] New feature
-   - [ ] Documentation
-   - [ ] Other
-
-   ## Checklist
-   - [ ] Tests added/updated
-   - [ ] Documentation updated
-   - [ ] Code follows style guidelines
+   ```bash
+   npm run dev
+   npm run build
+   npm run test  # if tests exist
    ```
 
-## Project Structure
+4. **Commit Changes**
 
-```
-applicationbuddy/
-├── api/              # API routes and services
-├── components/       # React components
-├── extension/        # Browser extension
-├── lib/             # Shared utilities
-├── pages/           # Next.js pages
-├── public/          # Static assets
-└── styles/          # CSS styles
-```
+   ```bash
+   git add .
+   git commit -m "feat(scope): description"
+   git push origin feature/your-feature-name
+   ```
 
-## Testing
+5. **Create Pull Request**
+   - Use the PR template
+   - Describe changes clearly
+   - Link related issues
+   - Request reviews
 
-### 1. Unit Tests
+---
 
-```bash
-# Run all tests
-npm test
+## **TESTING GUIDELINES**
 
-# Run specific test file
-npm test -- path/to/test.ts
+### **Frontend Testing**
 
-# Run with coverage
-npm test -- --coverage
-```
+- Test components in isolation
+- Test user interactions
+- Test responsive design
+- Test accessibility features
 
-### 2. Integration Tests
+### **API Testing**
 
-```bash
-# Run integration tests
-npm run test:integration
+- Test all endpoints
+- Test error scenarios
+- Test authentication
+- Test data validation
 
-# Run specific integration test
-npm run test:integration -- path/to/test.ts
-```
+### **Manual Testing Checklist**
 
-### 3. E2E Tests
+- [ ] Authentication flow works
+- [ ] Profile management functions
+- [ ] Resume upload and parsing
+- [ ] Work experience CRUD
+- [ ] Education CRUD
+- [ ] Skills management
+- [ ] Responsive design
+- [ ] Error handling
 
-```bash
-# Run E2E tests
-npm run test:e2e
+---
 
-# Run specific E2E test
-npm run test:e2e -- path/to/test.ts
-```
+## **DOCUMENTATION**
 
-## Documentation
+### **Code Documentation**
 
-### 1. Code Documentation
+- Use JSDoc for functions and classes
+- Document complex logic
+- Add inline comments for clarity
+- Keep README files updated
 
-```typescript
-/**
- * Function description
- * @param {string} param1 - Parameter description
- * @returns {Promise<Type>} Return value description
- */
-```
+### **API Documentation**
 
-### 2. API Documentation
+- Document all endpoints
+- Include request/response examples
+- Document error codes
+- Keep API reference updated
 
-```typescript
-/**
- * @api {post} /api/endpoint Endpoint description
- * @apiName EndpointName
- * @apiGroup Group
- * @apiParam {String} param1 Parameter description
- * @apiSuccess {Object} response Response description
- */
-```
+### **User Documentation**
 
-## Review Process
+- Write clear user guides
+- Include screenshots
+- Provide troubleshooting steps
+- Keep documentation current
 
-1. **Code Review**
-   - Review for functionality
-   - Check code style
-   - Verify tests
-   - Review documentation
+---
 
-2. **Approval Process**
-   - At least one approval required
-   - All tests must pass
-   - No merge conflicts
-   - Documentation updated
+## **DESIGN GUIDELINES**
 
-## Deployment
+### **UI/UX Principles**
 
-### 1. Web Application
+- **Human-centric design** - Technology serves users
+- **Reduce cognitive load** - Make complex things simple
+- **Anticipate user needs** - Design natural flows
+- **Build trust** - Clear actions, predictable outcomes
 
-```bash
-# Deploy to Vercel
-vercel
+### **Visual Standards**
 
-# Deploy to production
-vercel --prod
-```
+- **Colors:** Professional blues, sophisticated grays, tech accents
+- **Typography:** Clean sans-serif fonts, proper hierarchy
+- **Spacing:** Generous whitespace, consistent grid
+- **Animations:** 200-400ms duration, natural easing
 
-### 2. Browser Extension
+### **Accessibility**
 
-```bash
-# Build extension
-npm run build:extension
+- **Keyboard navigation** for all interactive elements
+- **Screen reader compatibility** with ARIA labels
+- **Color contrast** meeting WCAG standards
+- **Focus indicators** that are clearly visible
 
-# Package for stores
-npm run package:extension
-```
+---
 
-## Support
+## **BUG REPORTS**
 
-### 1. Getting Help
+### **Reporting Bugs**
 
-- Check documentation
-- Search issues
-- Join community chat
-- Contact maintainers
+1. **Check existing issues** - Don't duplicate
+2. **Use the bug report template**
+3. **Include reproduction steps**
+4. **Provide environment details**
+5. **Add screenshots if relevant**
 
-### 2. Reporting Issues
+### **Bug Report Template**
 
 ```markdown
-## Issue Description
-Detailed description of the issue
+## Bug Description
+
+[Clear description of the issue]
 
 ## Steps to Reproduce
-1. Step one
-2. Step two
+
+1. [Step 1]
+2. [Step 2]
+3. [Step 3]
 
 ## Expected Behavior
-What should happen
+
+[What should happen]
 
 ## Actual Behavior
-What actually happens
+
+[What actually happens]
 
 ## Environment
-- OS: [e.g., Windows 10]
-- Browser: [e.g., Chrome 90]
-- Node.js: [e.g., v18.0.0]
+
+- Browser: [Chrome/Firefox/Safari]
+- OS: [Windows/Mac/Linux]
+- Device: [Desktop/Mobile]
+
+## Additional Information
+
+[Any other relevant details]
 ```
 
-## Code of Conduct
+---
 
-1. **Be Respectful**
-   - Respect all contributors
-   - Be patient and helpful
-   - Accept constructive criticism
+## **FEATURE REQUESTS**
 
-2. **Be Professional**
-   - Use professional language
-   - Stay on topic
-   - Follow project guidelines
+### **Requesting Features**
 
-3. **Be Collaborative**
-   - Help others
-   - Share knowledge
-   - Work together
+1. **Check existing requests** - Don't duplicate
+2. **Use the feature request template**
+3. **Explain the problem being solved**
+4. **Describe the proposed solution**
+5. **Consider implementation complexity**
 
-## License
+### **Feature Request Template**
 
-By contributing to ApplicationBuddy, you agree that your contributions will be licensed under the project's MIT License. 
+```markdown
+## Problem Statement
+
+[What problem does this feature solve?]
+
+## Proposed Solution
+
+[How should this feature work?]
+
+## Alternative Solutions
+
+[What other approaches were considered?]
+
+## Additional Context
+
+[Any other relevant information]
+```
+
+---
+
+## **SECURITY**
+
+### **Security Guidelines**
+
+- **Never commit sensitive data** (API keys, passwords)
+- **Use environment variables** for configuration
+- **Validate all inputs** on both client and server
+- **Follow OWASP guidelines** for web security
+- **Report security issues** privately
+
+### **Reporting Security Issues**
+
+- **Email:** security@applicationbuddy.com
+- **Don't create public issues** for security problems
+- **Provide detailed information** about the vulnerability
+- **Allow time for response** before disclosure
+
+---
+
+## **PERFORMANCE**
+
+### **Performance Guidelines**
+
+- **Optimize bundle size** - Use code splitting
+- **Minimize API calls** - Use caching where appropriate
+- **Optimize images** - Use appropriate formats and sizes
+- **Monitor Core Web Vitals** - Ensure good user experience
+- **Test on real devices** - Not just desktop
+
+---
+
+## **CURRENT PRIORITIES**
+
+### **Phase 3: Landing Page (Active)**
+
+- [ ] Modern landing page design
+- [ ] Feature showcase sections
+- [ ] Pricing page
+- [ ] SEO optimization
+- [ ] Analytics integration
+
+### **Phase 4: Browser Extension (Next)**
+
+- [ ] Chrome extension development
+- [ ] Form auto-fill functionality
+- [ ] Profile integration
+- [ ] Cross-browser testing
+
+### **Phase 5: AI Enhancement (Planned)**
+
+- [ ] Common questions database
+- [ ] Answer templates
+- [ ] Cover letter generation
+- [ ] Interview preparation
+
+---
+
+## **COMMUNICATION**
+
+### **Communication Channels**
+
+- **GitHub Issues** - Bug reports and feature requests
+- **GitHub Discussions** - General questions and ideas
+- **Pull Requests** - Code reviews and feedback
+- **Email** - Security issues and private matters
+
+### **Code Review Process**
+
+- **Be constructive** - Provide helpful feedback
+- **Be respectful** - Treat others with kindness
+- **Be thorough** - Review for bugs and improvements
+- **Be timely** - Respond within 48 hours
+
+---
+
+## **RECOGNITION**
+
+### **Contributor Recognition**
+
+- **Contributors list** in README
+- **Special thanks** in release notes
+- **Contributor badges** for significant contributions
+- **Mention in blog posts** and announcements
+
+### **Types of Contributions**
+
+- **Code contributions** - Features, bug fixes, improvements
+- **Documentation** - Guides, tutorials, API docs
+- **Design** - UI/UX improvements, graphics
+- **Testing** - Bug reports, testing, feedback
+- **Community** - Helping others, answering questions
+
+---
+
+## **GETTING HELP**
+
+### **Need Help?**
+
+- **Check documentation** - Start with README and docs
+- **Search issues** - Look for similar problems
+- **Ask questions** - Use GitHub Discussions
+- **Join community** - Connect with other contributors
+
+### **Resources**
+
+- [Project Documentation](./README.md)
+- [API Reference](./API_REFERENCE.md)
+- [Deployment Guide](./DEPLOYMENT.md)
+- [Bug Tracker](./BUG_TRACKER.md)
+
+---
+
+**Thank you for contributing to ApplicationBuddy! Together, we're building the future of job applications!**
