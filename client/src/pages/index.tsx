@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   Chrome, 
   Zap, 
@@ -17,11 +18,22 @@ import {
   Star,
   Mail,
   Github,
-  Linkedin
+  Linkedin,
+  LogOut
 } from 'lucide-react';
 
 export default function LandingPage() {
   const [, navigate] = useLocation();
+  const { currentUser, logout } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
@@ -36,19 +48,41 @@ export default function LandingPage() {
               <h1 className="text-xl font-bold text-foreground">ApplicationBuddy</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                onClick={() => navigate('/auth/login')}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                Sign In
-              </Button>
-              <Button
-                onClick={() => navigate('/auth/register')}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                Get Started
-              </Button>
+              {currentUser ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    onClick={() => navigate('/dashboard')}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    Dashboard
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={handleSignOut}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="ghost"
+                    onClick={() => navigate('/login')}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    Sign In
+                  </Button>
+                  <Button
+                    onClick={() => navigate('/register')}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    Get Started
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -81,23 +115,47 @@ export default function LandingPage() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              <Button
-                size="lg"
-                onClick={() => navigate('/auth/register')}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-200 px-8 py-3 text-lg"
-              >
-                <Download className="w-5 h-5 mr-2" />
-                Install Extension
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => navigate('/auth/register')}
-                className="border-2 hover:bg-muted transition-all duration-200 px-8 py-3 text-lg"
-              >
-                Create Account
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
+              {currentUser ? (
+                <>
+                  <Button
+                    size="lg"
+                    onClick={() => navigate('/dashboard')}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-200 px-8 py-3 text-lg"
+                  >
+                    <Download className="w-5 h-5 mr-2" />
+                    Go to Dashboard
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={() => navigate('/resume')}
+                    className="border-2 hover:bg-muted transition-all duration-200 px-8 py-3 text-lg"
+                  >
+                    Upload Resume
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    size="lg"
+                    onClick={() => navigate('/register')}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-200 px-8 py-3 text-lg"
+                  >
+                    <Download className="w-5 h-5 mr-2" />
+                    Install Extension
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={() => navigate('/register')}
+                    className="border-2 hover:bg-muted transition-all duration-200 px-8 py-3 text-lg"
+                  >
+                    Create Account
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </>
+              )}
             </div>
 
             {/* Social Proof */}
@@ -296,24 +354,49 @@ export default function LandingPage() {
             Join thousands of professionals who are already saving time and landing more interviews.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              variant="secondary"
-              onClick={() => navigate('/auth/register')}
-              className="bg-white text-primary hover:bg-white/90 shadow-lg hover:shadow-xl transition-all duration-200 px-8 py-3 text-lg"
-            >
-              <Download className="w-5 h-5 mr-2" />
-              Get Started Free
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => navigate('/help')}
-              className="border-white text-white hover:bg-white/10 transition-all duration-200 px-8 py-3 text-lg"
-            >
-              Learn More
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
+            {currentUser ? (
+              <>
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  onClick={() => navigate('/dashboard')}
+                  className="bg-white text-primary hover:bg-white/90 shadow-lg hover:shadow-xl transition-all duration-200 px-8 py-3 text-lg"
+                >
+                  <Download className="w-5 h-5 mr-2" />
+                  Go to Dashboard
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => navigate('/resume')}
+                  className="border-white text-white hover:bg-white/10 transition-all duration-200 px-8 py-3 text-lg"
+                >
+                  Upload Resume
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  onClick={() => navigate('/register')}
+                  className="bg-white text-primary hover:bg-white/90 shadow-lg hover:shadow-xl transition-all duration-200 px-8 py-3 text-lg"
+                >
+                  <Download className="w-5 h-5 mr-2" />
+                  Get Started Free
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => navigate('/help')}
+                  className="border-white text-white hover:bg-white/10 transition-all duration-200 px-8 py-3 text-lg"
+                >
+                  Learn More
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </section>

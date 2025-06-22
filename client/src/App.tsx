@@ -2,6 +2,7 @@ import { Switch, Route, useLocation } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
+import LandingPage from "@/pages/index";
 import Dashboard from "@/pages/dashboard";
 import Profile from "@/pages/profile";
 import Resume from "@/pages/resume";
@@ -9,6 +10,7 @@ import Templates from "@/pages/templates";
 import Settings from "@/pages/settings";
 import Help from "@/pages/help";
 import Privacy from "@/pages/privacy";
+import Terms from "@/pages/terms";
 import Login from "@/pages/auth/login";
 import Register from "@/pages/auth/register";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,6 +36,27 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   return <Component />;
 }
 
+function PublicRoute({ component: Component }: { component: React.ComponentType }) {
+  const { currentUser, isLoading } = useAuth();
+  const [_, navigate] = useLocation();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // If user is authenticated, redirect to dashboard
+  if (currentUser) {
+    navigate("/dashboard");
+    return null;
+  }
+
+  return <Component />;
+}
+
 function Router() {
   const { currentUser, isLoading } = useAuth();
 
@@ -47,9 +70,22 @@ function Router() {
 
   return (
     <Switch>
-      <Route path="/login" component={Login} />
-      <Route path="/register" component={Register} />
+      {/* Public routes - redirect to dashboard if authenticated */}
       <Route path="/">
+        {() => <PublicRoute component={LandingPage} />}
+      </Route>
+      <Route path="/login">
+        {() => <PublicRoute component={Login} />}
+      </Route>
+      <Route path="/register">
+        {() => <PublicRoute component={Register} />}
+      </Route>
+      <Route path="/privacy" component={Privacy} />
+      <Route path="/terms" component={Terms} />
+      <Route path="/help" component={Help} />
+      
+      {/* Protected routes - require authentication */}
+      <Route path="/dashboard">
         {() => <ProtectedRoute component={Dashboard} />}
       </Route>
       <Route path="/profile">
@@ -64,12 +100,7 @@ function Router() {
       <Route path="/settings">
         {() => <ProtectedRoute component={Settings} />}
       </Route>
-      <Route path="/help">
-        {() => <ProtectedRoute component={Help} />}
-      </Route>
-      <Route path="/privacy">
-        {() => <ProtectedRoute component={Privacy} />}
-      </Route>
+      
       <Route component={NotFound} />
     </Switch>
   );
