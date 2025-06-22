@@ -1,11 +1,7 @@
-// API documentation: see ../../docs/API_REFERENCE.md for all endpoints, request/response shapes, and usage notes.
-//
+// ApplicationBuddy API - Serverless Function for Vercel
+// Based on TextBlaster pattern but adapted for Firebase Admin
 
-import express from 'express';
-import cors from 'cors';
-import { rateLimit } from 'express-rate-limit';
-import { auth } from 'firebase-admin';
-import { initializeApp, cert, ServiceAccount } from 'firebase-admin/app';
+import { initializeApp, cert, App } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
@@ -13,10 +9,7 @@ import { firestoreStorage } from './firestore-storage.js';
 import { processResumeFile } from './resumeProcessor.js';
 import { parseResumeWithAI } from './openai.js';
 import { seedTemplates } from './seed-templates.js';
-import { createViteServer } from './vite.js';
 import { config } from './config.js';
-import type { ViteDevServer } from 'vite';
-import type { Express, Request, Response } from 'express';
 import type { DecodedIdToken } from 'firebase-admin/auth';
 import { 
   personalInfoSchema, 
@@ -24,128 +17,65 @@ import {
   educationSchema,
   profileSchema,
   questionTemplateSchema,
-  userAnswerSchema,
-  QuestionTemplate,
-  UserAnswer,
-  QuestionTemplateData,
-  UserAnswerData
+  userAnswerSchema
 } from './schema.js';
-import session from 'express-session';
 
-// Extend Express Request type to include user
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        id?: number;
-        uid: string;
-        email: string;
-        firebaseUser: DecodedIdToken;
-      };
-    }
-  }
+// Initialize Firebase Admin (only once)
+let firebaseApp: App | undefined;
+try {
+  firebaseApp = initializeApp({
+    credential: cert({
+      projectId: config.firebase.projectId,
+      clientEmail: config.firebase.clientEmail,
+      privateKey: config.firebase.privateKey,
+    }),
+    storageBucket: config.firebase.storageBucket
+  });
+} catch (error) {
+  // App might already be initialized
+  console.log('Firebase app already initialized or error:', error);
 }
 
-// Initialize Firebase Admin
-initializeApp({
-  credential: cert({
-    projectId: config.firebase.projectId,
-    clientEmail: config.firebase.clientEmail,
-    privateKey: config.firebase.privateKey,
-  }),
-  storageBucket: config.firebase.storageBucket
-});
-
-// Create Express app
-const app = express();
-const port = process.env.PORT || 3000;
-
-// Rate limiting configuration
-const limiter = rateLimit({
-  windowMs: config.rateLimit.windowMs,
-  max: config.rateLimit.max,
-  message: 'Too many requests from this IP, please try again later.'
-});
-
-// Apply rate limiting to all routes
-app.use(limiter);
-
-// CORS configuration
-const corsOptions = {
-  origin: config.server.env === 'production' 
-    ? [
-        config.webApp.url || '',
-        config.webApp.extensionId ? `chrome-extension://${config.webApp.extensionId}` : ''
-      ].filter(Boolean) as string[]
-    : true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-  preflightContinue: false,
-  optionsSuccessStatus: 204,
-  maxAge: config.cors.maxAge
-};
-
-// Apply CORS with options
-app.use(cors(corsOptions));
-
-// Handle OPTIONS requests
-app.options('*', cors(corsOptions));
-
-app.use(express.json());
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    },
-  })
-);
-
-// Auth middleware
-const authMiddleware = async (req: Request, res: Response, next: Function) => {
+// Auth middleware for serverless
+const authMiddleware = async (req: any) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'No token provided' });
+      throw new Error('No token provided');
     }
 
     const token = authHeader.split('Bearer ')[1];
     const decodedToken = await getAuth().verifyIdToken(token);
-    req.user = {
+    return {
       uid: decodedToken.uid,
       email: decodedToken.email || '',
       firebaseUser: decodedToken
     };
-    next();
   } catch (error) {
     console.error('Auth error:', error);
-    res.status(401).json({ error: 'Invalid token' });
+    throw new Error('Invalid token');
   }
 };
 
 // Helper function to get user ID from Firebase UID
-const getUserId = async (req: Request): Promise<number | null> => {
-  if (req.user?.uid) {
-    let dbUser = await firestoreStorage.getUserByFirebaseUID(req.user.uid);
+const getUserId = async (user: any): Promise<number | null> => {
+  if (user?.uid) {
+    let dbUser = await firestoreStorage.getUserByFirebaseUID(user.uid);
     
     if (!dbUser) {
-      console.log(`Auto-creating new user for Firebase UID: ${req.user.uid}`);
+      console.log(`Auto-creating new user for Firebase UID: ${user.uid}`);
       dbUser = await firestoreStorage.createUser({
-        email: req.user.email,
-        username: req.user.email,
-        displayName: req.user.firebaseUser.name || req.user.email.split('@')[0],
+        email: user.email,
+        username: user.email,
+        displayName: user.firebaseUser.name || user.email.split('@')[0],
         password: null,
-        firebaseUID: req.user.uid,
-        photoURL: req.user.firebaseUser.picture || null,
+        firebaseUID: user.uid,
+        photoURL: user.firebaseUser.picture || null,
         authProvider: 'firebase'
       });
       
-      await firestoreStorage.createProfile(dbUser.id);
-      console.log(`Created user ID ${dbUser.id} and profile for Firebase user ${req.user.uid}`);
+      await firestoreStorage.createProfile(Number(dbUser.id));
+      console.log(`Created user ID ${dbUser.id} and profile for Firebase user ${user.uid}`);
     }
     
     return dbUser?.id || null;
@@ -153,41 +83,36 @@ const getUserId = async (req: Request): Promise<number | null> => {
   return null;
 };
 
-// API Routes
-
-// User routes
-app.get('/user', authMiddleware, async (req, res) => {
+// Route handlers
+async function handleUser(req: any, res: any) {
   try {
-    if (req.user?.uid) {
-      let dbUser = await firestoreStorage.getUserByFirebaseUID(req.user.uid);
-      
-      if (!dbUser) {
-        console.log(`Creating new user for Firebase UID: ${req.user.uid}`);
-        dbUser = await firestoreStorage.createUser({
-          email: req.user.email,
-          username: req.user.email,
-          displayName: req.user.firebaseUser.name || req.user.email.split('@')[0],
-          password: null,
-          firebaseUID: req.user.uid,
-          photoURL: req.user.firebaseUser.picture || null,
-          authProvider: 'firebase'
-        });
-      }
-      
-      res.json(dbUser);
-    } else {
-      res.status(401).json({ error: 'Not authenticated' });
+    const user = await authMiddleware(req);
+    let dbUser = await firestoreStorage.getUserByFirebaseUID(user.uid);
+    
+    if (!dbUser) {
+      console.log(`Creating new user for Firebase UID: ${user.uid}`);
+      dbUser = await firestoreStorage.createUser({
+        email: user.email,
+        username: user.email,
+        displayName: user.firebaseUser.name || user.email.split('@')[0],
+        password: null,
+        firebaseUID: user.uid,
+        photoURL: user.firebaseUser.picture || null,
+        authProvider: 'firebase'
+      });
     }
+    
+    res.json(dbUser);
   } catch (error) {
     console.error('Error in /user:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(401).json({ error: 'Not authenticated' });
   }
-});
+}
 
-// Profile routes
-app.get('/profile', authMiddleware, async (req, res) => {
+async function handleProfile(req: any, res: any) {
   try {
-    const userId = await getUserId(req);
+    const user = await authMiddleware(req);
+    const userId = await getUserId(user);
     if (!userId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -197,55 +122,39 @@ app.get('/profile', authMiddleware, async (req, res) => {
       return res.status(404).json({ message: "Profile not found" });
     }
 
-    // Set cache control headers to prevent caching
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-    res.setHeader('Surrogate-Control', 'no-store');
-    
     res.json(profile);
   } catch (error) {
-    console.error('Get profile error:', error);
-    res.status(500).json({ message: "Server error" });
+    console.error('Error in /profile:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-});
+}
 
-app.put('/profile', authMiddleware, async (req, res) => {
+async function handleUpdateProfile(req: any, res: any) {
   try {
-    const userId = await getUserId(req);
+    const user = await authMiddleware(req);
+    const userId = await getUserId(user);
     if (!userId) {
-      console.error('No user ID found in request');
       return res.status(401).json({ message: "Not authenticated" });
     }
 
-    console.log('Updating profile for user:', userId);
-    console.log('Profile data:', req.body);
+    const profile = await firestoreStorage.getProfile(userId);
+    if (!profile) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
 
-    const profileData = profileSchema.parse(req.body);
-    console.log('Parsed profile data:', profileData);
-
-    const updatedProfile = await firestoreStorage.updateProfile(userId, profileData);
-    console.log('Profile updated successfully:', updatedProfile);
-    
+    const updatedProfile = await firestoreStorage.updateProfile(profile.id, req.body);
     res.json(updatedProfile);
-  } catch (error: any) {
-    console.error('Update profile error details:', {
-      error,
-      message: error?.message,
-      stack: error?.stack,
-      body: req.body
-    });
-    res.status(500).json({ 
-      message: "Server error",
-      details: error?.message || 'Unknown error'
-    });
+  } catch (error) {
+    console.error('Error in /profile update:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-});
+}
 
-// Work Experience routes
-app.post('/profile/work-experiences', authMiddleware, async (req, res) => {
+// Work Experience handlers
+async function handleAddWorkExperience(req: any, res: any) {
   try {
-    const userId = await getUserId(req);
+    const user = await authMiddleware(req);
+    const userId = await getUserId(user);
     if (!userId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -259,14 +168,15 @@ app.post('/profile/work-experiences', authMiddleware, async (req, res) => {
     const updatedWorkExp = await firestoreStorage.addWorkExperience(profile.id, workExp);
     res.json(updatedWorkExp);
   } catch (error) {
-    console.error('Add work experience error:', error);
-    res.status(500).json({ message: "Server error" });
+    console.error('Error adding work experience:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-});
+}
 
-app.patch('/profile/work-experiences/:id', authMiddleware, async (req, res) => {
+async function handleUpdateWorkExperience(req: any, res: any) {
   try {
-    const userId = await getUserId(req);
+    const user = await authMiddleware(req);
+    const userId = await getUserId(user);
     if (!userId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -275,14 +185,15 @@ app.patch('/profile/work-experiences/:id', authMiddleware, async (req, res) => {
     const updatedWorkExp = await firestoreStorage.updateWorkExperience(parseInt(req.params.id), workExp);
     res.json(updatedWorkExp);
   } catch (error) {
-    console.error('Update work experience error:', error);
-    res.status(500).json({ message: "Server error" });
+    console.error('Error updating work experience:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-});
+}
 
-app.delete('/profile/work-experiences/:id', authMiddleware, async (req, res) => {
+async function handleDeleteWorkExperience(req: any, res: any) {
   try {
-    const userId = await getUserId(req);
+    const user = await authMiddleware(req);
+    const userId = await getUserId(user);
     if (!userId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -290,15 +201,16 @@ app.delete('/profile/work-experiences/:id', authMiddleware, async (req, res) => 
     const success = await firestoreStorage.deleteWorkExperience(parseInt(req.params.id));
     res.json({ success });
   } catch (error) {
-    console.error('Delete work experience error:', error);
-    res.status(500).json({ message: "Server error" });
+    console.error('Error deleting work experience:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-});
+}
 
-// Education routes
-app.post('/profile/educations', authMiddleware, async (req, res) => {
+// Education handlers
+async function handleAddEducation(req: any, res: any) {
   try {
-    const userId = await getUserId(req);
+    const user = await authMiddleware(req);
+    const userId = await getUserId(user);
     if (!userId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -312,14 +224,15 @@ app.post('/profile/educations', authMiddleware, async (req, res) => {
     const updatedEducation = await firestoreStorage.addEducation(profile.id, education);
     res.json(updatedEducation);
   } catch (error) {
-    console.error('Add education error:', error);
-    res.status(500).json({ message: "Server error" });
+    console.error('Error adding education:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-});
+}
 
-app.patch('/profile/educations/:id', authMiddleware, async (req, res) => {
+async function handleUpdateEducation(req: any, res: any) {
   try {
-    const userId = await getUserId(req);
+    const user = await authMiddleware(req);
+    const userId = await getUserId(user);
     if (!userId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -328,14 +241,15 @@ app.patch('/profile/educations/:id', authMiddleware, async (req, res) => {
     const updatedEducation = await firestoreStorage.updateEducation(parseInt(req.params.id), education);
     res.json(updatedEducation);
   } catch (error) {
-    console.error('Update education error:', error);
-    res.status(500).json({ message: "Server error" });
+    console.error('Error updating education:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-});
+}
 
-app.delete('/profile/educations/:id', authMiddleware, async (req, res) => {
+async function handleDeleteEducation(req: any, res: any) {
   try {
-    const userId = await getUserId(req);
+    const user = await authMiddleware(req);
+    const userId = await getUserId(user);
     if (!userId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -343,15 +257,16 @@ app.delete('/profile/educations/:id', authMiddleware, async (req, res) => {
     const success = await firestoreStorage.deleteEducation(parseInt(req.params.id));
     res.json({ success });
   } catch (error) {
-    console.error('Delete education error:', error);
-    res.status(500).json({ message: "Server error" });
+    console.error('Error deleting education:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-});
+}
 
-// Skills route
-app.patch('/profile/skills', authMiddleware, async (req, res) => {
+// Skills handler
+async function handleUpdateSkills(req: any, res: any) {
   try {
-    const userId = await getUserId(req);
+    const user = await authMiddleware(req);
+    const userId = await getUserId(user);
     if (!userId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -369,15 +284,16 @@ app.patch('/profile/skills', authMiddleware, async (req, res) => {
     const updatedProfile = await firestoreStorage.updateSkills(profile.id, skills);
     res.json(updatedProfile);
   } catch (error) {
-    console.error('Update skills error:', error);
-    res.status(500).json({ message: "Server error" });
+    console.error('Error updating skills:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-});
+}
 
-// Resume routes
-app.post('/resume/process', authMiddleware, async (req, res) => {
+// Resume handlers
+async function handleResumeProcess(req: any, res: any) {
   try {
-    const userId = await getUserId(req);
+    const user = await authMiddleware(req);
+    const userId = await getUserId(user);
     if (!userId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -395,14 +311,15 @@ app.post('/resume/process', authMiddleware, async (req, res) => {
 
     res.json(resume);
   } catch (error) {
-    console.error('Upload resume error:', error);
-    res.status(500).json({ message: "Server error" });
+    console.error('Error processing resume:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-});
+}
 
-app.get('/resumes', authMiddleware, async (req, res) => {
+async function handleGetResumes(req: any, res: any) {
   try {
-    const userId = await getUserId(req);
+    const user = await authMiddleware(req);
+    const userId = await getUserId(user);
     if (!userId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -410,14 +327,15 @@ app.get('/resumes', authMiddleware, async (req, res) => {
     const resumes = await firestoreStorage.getResumes(userId);
     res.json(resumes);
   } catch (error) {
-    console.error('Get resumes error:', error);
-    res.status(500).json({ message: "Server error" });
+    console.error('Error getting resumes:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-});
+}
 
-app.delete('/resumes/:id', authMiddleware, async (req, res) => {
+async function handleDeleteResume(req: any, res: any) {
   try {
-    const userId = await getUserId(req);
+    const user = await authMiddleware(req);
+    const userId = await getUserId(user);
     if (!userId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -425,15 +343,83 @@ app.delete('/resumes/:id', authMiddleware, async (req, res) => {
     const success = await firestoreStorage.deleteResume(parseInt(req.params.id));
     res.json({ success });
   } catch (error) {
-    console.error('Delete resume error:', error);
-    res.status(500).json({ message: "Server error" });
+    console.error('Error deleting resume:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-});
+}
 
-// User data export and deletion
-app.get('/user/export-data', authMiddleware, async (req, res) => {
+// Questions and Answers handlers
+async function handleGetQuestions(req: any, res: any) {
   try {
-    const userId = await getUserId(req);
+    const user = await authMiddleware(req);
+    const userId = await getUserId(user);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const templates = await firestoreStorage.getQuestionTemplates();
+    res.json(templates);
+  } catch (error) {
+    console.error('Error getting questions:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+async function handleSaveAnswer(req: any, res: any) {
+  try {
+    const user = await authMiddleware(req);
+    const userId = await getUserId(user);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const answer = userAnswerSchema.parse(req.body);
+    const savedAnswer = await firestoreStorage.saveUserAnswer(userId, answer);
+    res.json(savedAnswer);
+  } catch (error) {
+    console.error('Error saving answer:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+async function handleGetAnswers(req: any, res: any) {
+  try {
+    const user = await authMiddleware(req);
+    const userId = await getUserId(user);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const answers = await firestoreStorage.getUserAnswers(userId);
+    res.json(answers);
+  } catch (error) {
+    console.error('Error getting answers:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+// Profile reset handler
+async function handleResetProfile(req: any, res: any) {
+  try {
+    const user = await authMiddleware(req);
+    const userId = await getUserId(user);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const success = await firestoreStorage.resetUserProfile(userId);
+    res.json({ success });
+  } catch (error) {
+    console.error('Error resetting profile:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+// User data export handler
+async function handleExportData(req: any, res: any) {
+  try {
+    const user = await authMiddleware(req);
+    const userId = await getUserId(user);
     if (!userId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -456,14 +442,16 @@ app.get('/user/export-data', authMiddleware, async (req, res) => {
       answers
     });
   } catch (error) {
-    console.error('Export user data error:', error);
-    res.status(500).json({ message: "Server error" });
+    console.error('Error exporting user data:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-});
+}
 
-app.post('/user/delete-account', authMiddleware, async (req, res) => {
+// Delete account handler
+async function handleDeleteAccount(req: any, res: any) {
   try {
-    const userId = await getUserId(req);
+    const user = await authMiddleware(req);
+    const userId = await getUserId(user);
     if (!userId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -475,107 +463,170 @@ app.post('/user/delete-account', authMiddleware, async (req, res) => {
 
     res.json({ message: "Account deleted successfully" });
   } catch (error) {
-    console.error('Delete account error:', error);
-    res.status(500).json({ message: "Server error" });
+    console.error('Error deleting account:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-});
+}
 
-// Profile reset
-app.post('/profile/reset', authMiddleware, async (req, res) => {
+async function handleTemplates(req: any, res: any) {
   try {
-    const userId = await getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-
-    const success = await firestoreStorage.resetUserProfile(userId);
-    res.json({ success });
-  } catch (error) {
-    console.error('Reset profile error:', error);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-// User answers
-app.post('/answers', authMiddleware, async (req, res) => {
-  try {
-    const userId = await getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-
-    const answer = userAnswerSchema.parse(req.body);
-    const savedAnswer = await firestoreStorage.saveUserAnswer(userId, answer);
-    res.json(savedAnswer);
-  } catch (error) {
-    console.error('Save answer error:', error);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-// Question template routes
-app.get('/questions', authMiddleware, async (req, res) => {
-  try {
-    const templates = await firestoreStorage.getQuestionTemplates();
+    const templates = await seedTemplates();
     res.json(templates);
   } catch (error) {
-    console.error('Get questions error:', error);
-    res.status(500).json({ message: "Server error" });
+    console.error('Error fetching templates:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-});
+}
 
-// Error handling middleware
-const errorHandler = (err: any, req: Request, res: Response, next: Function) => {
-  console.error('API Error:', {
-    error: err,
-    message: err.message,
-    stack: err.stack,
-    path: req.path,
-    method: req.method,
-    body: req.body
-  });
-
-  // Handle validation errors
-  if (err.name === 'ZodError') {
-    return res.status(400).json({
-      error: 'Validation Error',
-      details: err.errors
-    });
-  }
-
-  // Handle Firebase auth errors
-  if (err.code?.startsWith('auth/')) {
-    return res.status(401).json({
-      error: 'Authentication Error',
-      message: err.message
-    });
-  }
-
-  // Handle Firestore errors
-  if (err.code?.startsWith('firestore/')) {
-    return res.status(500).json({
-      error: 'Database Error',
-      message: 'An error occurred while accessing the database'
-    });
-  }
-
-  // Default error response
-  res.status(500).json({
-    error: 'Internal Server Error',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'An unexpected error occurred'
-  });
-};
-
-// Apply error handling middleware last
-app.use(errorHandler);
-
-// Development server
-if (process.env.NODE_ENV === "development") {
-  createViteServer(app).catch((err) => {
-    console.error("Error starting Vite server:", err);
-    process.exit(1);
+async function handleHealth(req: any, res: any) {
+  res.json({ 
+    status: 'healthy',
+    message: 'ApplicationBuddy API with Firebase', 
+    timestamp: new Date().toISOString(),
+    firebase: firebaseApp ? 'initialized' : 'not configured'
   });
 }
 
-// Export the Express app for Vercel
-export default app;
+// Main handler for Vercel
+export default async (req: any, res: any) => {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  const { url, method } = req;
+  const path = url?.replace('/api', '') || '/';
+
+  try {
+    // Route handling
+    if (path === '/health' && method === 'GET') {
+      return await handleHealth(req, res);
+    }
+
+    if (path === '/user' && method === 'GET') {
+      return await handleUser(req, res);
+    }
+
+    if (path === '/profile' && method === 'GET') {
+      return await handleProfile(req, res);
+    }
+
+    if (path === '/profile' && method === 'PUT') {
+      return await handleUpdateProfile(req, res);
+    }
+
+    if (path === '/profile/work-experiences' && method === 'POST') {
+      return await handleAddWorkExperience(req, res);
+    }
+
+    if (path.match(/^\/profile\/work-experiences\/\d+$/) && method === 'PATCH') {
+      req.params = { id: path.split('/').pop() };
+      return await handleUpdateWorkExperience(req, res);
+    }
+
+    if (path.match(/^\/profile\/work-experiences\/\d+$/) && method === 'DELETE') {
+      req.params = { id: path.split('/').pop() };
+      return await handleDeleteWorkExperience(req, res);
+    }
+
+    if (path === '/profile/educations' && method === 'POST') {
+      return await handleAddEducation(req, res);
+    }
+
+    if (path.match(/^\/profile\/educations\/\d+$/) && method === 'PATCH') {
+      req.params = { id: path.split('/').pop() };
+      return await handleUpdateEducation(req, res);
+    }
+
+    if (path.match(/^\/profile\/educations\/\d+$/) && method === 'DELETE') {
+      req.params = { id: path.split('/').pop() };
+      return await handleDeleteEducation(req, res);
+    }
+
+    if (path === '/profile/skills' && method === 'PATCH') {
+      return await handleUpdateSkills(req, res);
+    }
+
+    if (path === '/resume/process' && method === 'POST') {
+      return await handleResumeProcess(req, res);
+    }
+
+    if (path === '/resumes' && method === 'GET') {
+      return await handleGetResumes(req, res);
+    }
+
+    if (path.match(/^\/resumes\/\d+$/) && method === 'DELETE') {
+      req.params = { id: path.split('/').pop() };
+      return await handleDeleteResume(req, res);
+    }
+
+    if (path === '/questions' && method === 'GET') {
+      return await handleGetQuestions(req, res);
+    }
+
+    if (path === '/answers' && method === 'POST') {
+      return await handleSaveAnswer(req, res);
+    }
+
+    if (path === '/answers' && method === 'GET') {
+      return await handleGetAnswers(req, res);
+    }
+
+    if (path === '/profile/reset' && method === 'POST') {
+      return await handleResetProfile(req, res);
+    }
+
+    if (path === '/user/export-data' && method === 'GET') {
+      return await handleExportData(req, res);
+    }
+
+    if (path === '/user/delete-account' && method === 'POST') {
+      return await handleDeleteAccount(req, res);
+    }
+
+    if (path === '/templates' && method === 'GET') {
+      return await handleTemplates(req, res);
+    }
+
+    // Default response for unmatched routes
+    return res.status(404).json({ 
+      message: 'Endpoint not found', 
+      path, 
+      method,
+      availableEndpoints: [
+        'GET /api/health',
+        'GET /api/user',
+        'GET /api/profile',
+        'PUT /api/profile',
+        'POST /api/profile/work-experiences',
+        'PATCH /api/profile/work-experiences/:id',
+        'DELETE /api/profile/work-experiences/:id',
+        'POST /api/profile/educations',
+        'PATCH /api/profile/educations/:id',
+        'DELETE /api/profile/educations/:id',
+        'PATCH /api/profile/skills',
+        'POST /api/resume/process',
+        'GET /api/resumes',
+        'DELETE /api/resumes/:id',
+        'GET /api/questions',
+        'POST /api/answers',
+        'GET /api/answers',
+        'POST /api/profile/reset',
+        'GET /api/user/export-data',
+        'POST /api/user/delete-account',
+        'GET /api/templates'
+      ]
+    });
+
+  } catch (error) {
+    console.error('API Error:', error);
+    return res.status(500).json({ 
+      message: 'Internal server error',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};
