@@ -6,10 +6,14 @@ import { useState } from "react";
 import ProfileModal from "@/components/profile/ProfileModal";
 
 export default function ProfileCompletionCard() {
-  const { profileData } = useProfile();
+  const { profileData, isLoading } = useProfile();
   const [isProfileModalOpen, setProfileModalOpen] = useState(false);
 
-  if (!profileData) {
+  // Debug logging
+  console.log('ProfileCompletionCard - profileData:', profileData);
+  console.log('ProfileCompletionCard - isLoading:', isLoading);
+
+  if (isLoading) {
     return (
       <Card className="bg-card border border-border code-glow">
         <CardContent className="px-4 py-5 sm:p-6">
@@ -21,8 +25,25 @@ export default function ProfileCompletionCard() {
     );
   }
 
+  if (!profileData) {
+    return (
+      <Card className="bg-card border border-border code-glow">
+        <CardContent className="px-4 py-5 sm:p-6">
+          <div className="flex items-center justify-center h-40">
+            <p className="text-muted-foreground">No profile data available</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const { profile, workExperiences, educations } = profileData;
-  const completionPercentage = profile.completionPercentage || 0;
+  
+  // Debug logging
+  console.log('ProfileCompletionCard - profile:', profile);
+  console.log('ProfileCompletionCard - profile.completionPercentage:', profile?.completionPercentage);
+  
+  const completionPercentage = profile?.completionPercentage || 0;
 
   const profileSections = [
     {

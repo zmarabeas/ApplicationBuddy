@@ -48,9 +48,12 @@ interface Education {
 
 interface Profile {
   id: number;
+  userId: number;
   personalInfo: PersonalInfo | null;
   skills: string[] | null;
   completionPercentage: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface ProfileData {
