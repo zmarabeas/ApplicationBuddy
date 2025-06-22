@@ -24,7 +24,7 @@ export default function Sidebar({ className }: SidebarProps) {
   const navItems = [
     {
       name: "Dashboard",
-      href: "/",
+      href: "/dashboard",
       icon: LayoutDashboard,
     },
     {
@@ -64,10 +64,10 @@ export default function Sidebar({ className }: SidebarProps) {
       <div className="flex flex-col w-64 bg-card border-r border-border code-glow">
         {/* Logo */}
         <div className="flex items-center h-16 px-6 border-b border-border">
-          <div className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
             <CheckCircle className="w-6 h-6 text-primary" />
             <span className="text-xl font-bold text-foreground">Job<span className="neon-text">Fillr</span></span>
-          </div>
+          </Link>
         </div>
 
         {/* Navigation */}
