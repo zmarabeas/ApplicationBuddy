@@ -1,7 +1,6 @@
 // ApplicationBuddy API - Serverless Function for Vercel
 // Based on TextBlaster pattern but adapted for Firebase Admin
 
-import { initializeApp, cert, App } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
@@ -19,22 +18,6 @@ import {
   questionTemplateSchema,
   userAnswerSchema
 } from './schema.js';
-
-// Initialize Firebase Admin (only once)
-let firebaseApp: App | undefined;
-try {
-  firebaseApp = initializeApp({
-    credential: cert({
-      projectId: config.firebase.projectId,
-      clientEmail: config.firebase.clientEmail,
-      privateKey: config.firebase.privateKey,
-    }),
-    storageBucket: config.firebase.storageBucket
-  });
-} catch (error) {
-  // App might already be initialized
-  console.log('Firebase app already initialized or error:', error);
-}
 
 // Auth middleware for serverless
 const authMiddleware = async (req: any) => {
@@ -479,12 +462,24 @@ async function handleTemplates(req: any, res: any) {
 }
 
 async function handleHealth(req: any, res: any) {
-  res.json({ 
-    status: 'healthy',
-    message: 'ApplicationBuddy API with Firebase', 
-    timestamp: new Date().toISOString(),
-    firebase: firebaseApp ? 'initialized' : 'not configured'
-  });
+  try {
+    // Try to access Firestore to check if Firebase is initialized
+    const db = getFirestore();
+    res.json({ 
+      status: 'healthy',
+      message: 'ApplicationBuddy API with Firebase', 
+      timestamp: new Date().toISOString(),
+      firebase: 'initialized'
+    });
+  } catch (error) {
+    res.json({ 
+      status: 'healthy',
+      message: 'ApplicationBuddy API with Firebase', 
+      timestamp: new Date().toISOString(),
+      firebase: 'not configured',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 }
 
 // Main handler for Vercel
