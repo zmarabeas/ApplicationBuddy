@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { rateLimit } from 'express-rate-limit';
 import { auth } from 'firebase-admin';
-import { initializeApp, cert } from 'firebase-admin/app';
+import { initializeApp, cert, ServiceAccount } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
@@ -44,7 +44,12 @@ declare global {
 }
 
 // Initialize Firebase Admin
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '{}');
+const serviceAccount: ServiceAccount = {
+  projectId: process.env.FIREBASE_PROJECT_ID!,
+  privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')!,
+  clientEmail: process.env.FIREBASE_CLIENT_EMAIL!
+};
+
 initializeApp({
   credential: cert(serviceAccount),
   storageBucket: process.env.FIREBASE_STORAGE_BUCKET
@@ -130,7 +135,7 @@ const getUserId = async (req: Request): Promise<number | null> => {
 // API Routes
 
 // User routes
-app.get('/api/user', authMiddleware, async (req, res) => {
+app.get('/user', authMiddleware, async (req, res) => {
   try {
     if (req.user?.uid) {
       let dbUser = await storage.getUserByFirebaseUID(req.user.uid);
@@ -153,13 +158,13 @@ app.get('/api/user', authMiddleware, async (req, res) => {
       res.status(401).json({ error: 'Not authenticated' });
     }
   } catch (error) {
-    console.error('Error in /api/user:', error);
+    console.error('Error in /user:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // Profile routes
-app.get('/api/profile', authMiddleware, async (req, res) => {
+app.get('/profile', authMiddleware, async (req, res) => {
   try {
     const userId = await getUserId(req);
     if (!userId) {
@@ -178,7 +183,7 @@ app.get('/api/profile', authMiddleware, async (req, res) => {
   }
 });
 
-app.put('/api/profile', authMiddleware, async (req, res) => {
+app.put('/profile', authMiddleware, async (req, res) => {
   try {
     const userId = await getUserId(req);
     if (!userId) {
@@ -195,7 +200,7 @@ app.put('/api/profile', authMiddleware, async (req, res) => {
 });
 
 // Resume routes
-app.post('/api/resume/process', authMiddleware, async (req, res) => {
+app.post('/resume/process', authMiddleware, async (req, res) => {
   try {
     const userId = await getUserId(req);
     if (!userId) {
@@ -223,7 +228,7 @@ app.post('/api/resume/process', authMiddleware, async (req, res) => {
 });
 
 // Question template routes
-app.get('/api/questions', authMiddleware, async (req, res) => {
+app.get('/questions', authMiddleware, async (req, res) => {
   try {
     const templates = await storage.getQuestionTemplates();
     res.json(templates);
@@ -234,7 +239,7 @@ app.get('/api/questions', authMiddleware, async (req, res) => {
 });
 
 // User answer routes
-app.post('/api/answers', authMiddleware, async (req, res) => {
+app.post('/answers', authMiddleware, async (req, res) => {
   try {
     const userId = await getUserId(req);
     if (!userId) {
@@ -258,7 +263,5 @@ if (process.env.NODE_ENV === "development") {
   });
 }
 
-// Start server
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+// Export for Vercel serverless functions
+export default app;

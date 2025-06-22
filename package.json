@@ -4,17 +4,23 @@
   "type": "module",
   "license": "MIT",
   "overrides": {
-    "pkg": false
+    "pkg": false,
+    "rollup": {
+      "optionalDependencies": {
+        "@rollup/rollup-linux-x64-gnu": "4.9.5",
+        "@rollup/rollup-darwin-x64": "4.9.5",
+        "@rollup/rollup-win32-x64-msvc": "4.9.5"
+      }
+    }
   },
   "scripts": {
-    "dev": "NODE_ENV=development tsx server/index.ts",
-    "build": "npm run build:client && npm run build:server",
+    "dev": "NODE_ENV=development tsx api/index.ts",
+    "build": "npm run build:client",
     "build:client": "vite build",
-    "build:server": "tsc -p tsconfig.server.json",
-    "start": "NODE_ENV=production node dist/index.js",
+    "start": "NODE_ENV=production node api/index.js",
     "check": "tsc",
     "db:push": "drizzle-kit push",
-    "vercel-build": "npm run build"
+    "vercel-build": "npm run build:client"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -94,8 +100,6 @@
     "zod-validation-error": "^3.4.0"
   },
   "devDependencies": {
-    "@replit/vite-plugin-cartographer": "^0.0.11",
-    "@replit/vite-plugin-runtime-error-modal": "^0.0.3",
     "@tailwindcss/typography": "^0.5.15",
     "@types/connect-pg-simple": "^7.0.3",
     "@types/cors": "^2.8.19",
