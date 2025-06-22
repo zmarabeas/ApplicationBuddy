@@ -4,6 +4,16 @@ This document describes all backend API endpoints, their methods, request/respon
 
 ---
 
+## Authentication
+
+All endpoints require a valid Firebase ID token in the Authorization header:
+
+```
+Authorization: Bearer <firebase-id-token>
+```
+
+---
+
 ## User
 
 ### GET `/api/user`
@@ -16,9 +26,35 @@ This document describes all backend API endpoints, their methods, request/respon
   "id": number,
   "uid": string,
   "email": string,
-  ...
+  "username": string,
+  "displayName": string,
+  "photoURL": string | null,
+  "authProvider": string,
+  "createdAt": string,
+  "updatedAt": string,
+  "lastLogin": string | null
 }
 ```
+
+### GET `/api/user/export-data`
+
+- **Description:** Export all user data.
+- **Response:**
+
+```json
+{
+  "profile": {...},
+  "workExperiences": [...],
+  "educations": [...],
+  "resumes": [...],
+  "answers": [...]
+}
+```
+
+### POST `/api/user/delete-account`
+
+- **Description:** Delete the user's account and data.
+- **Response:** `{ "message": "Account deleted successfully" }`
 
 ---
 
@@ -31,26 +67,43 @@ This document describes all backend API endpoints, their methods, request/respon
 
 ```json
 {
-  ...profile fields...
+  "id": number,
+  "userId": number,
+  "personalInfo": {
+    "firstName": string,
+    "lastName": string,
+    "email": string,
+    "phone": string,
+    "address": {
+      "street": string,
+      "city": string,
+      "state": string,
+      "zip": string,
+      "country": string
+    },
+    "links": {
+      "linkedin": string,
+      "github": string,
+      "portfolio": string
+    }
+  },
+  "skills": string[],
+  "completionPercentage": number,
+  "createdAt": string,
+  "updatedAt": string
 }
 ```
 
 ### PUT `/api/profile`
 
 - **Description:** Update the user's profile.
-- **Request:**
-
-```json
-{
-  ...profile fields...
-}
-```
-
+- **Request:** Profile object (partial updates supported)
 - **Response:** Updated profile object.
 
-### PATCH `/api/profile/personal-info`
+### POST `/api/profile/reset`
 
-- **Description:** (Frontend expects this, backend does not implement. Consider adding.)
+- **Description:** Reset the user's profile (clear all data).
+- **Response:** `{ "success": boolean }`
 
 ---
 
@@ -63,23 +116,22 @@ This document describes all backend API endpoints, their methods, request/respon
 
 ```json
 {
-  ...workExperience fields...
+  "company": string,
+  "title": string,
+  "location": string,
+  "startDate": string,
+  "endDate": string,
+  "current": boolean,
+  "description": string
 }
 ```
 
-- **Response:** Updated work experience object.
+- **Response:** Created work experience object with ID.
 
 ### PATCH `/api/profile/work-experiences/:id`
 
 - **Description:** Update a work experience.
-- **Request:**
-
-```json
-{
-  ...workExperience fields...
-}
-```
-
+- **Request:** Work experience object (partial updates supported)
 - **Response:** Updated work experience object.
 
 ### DELETE `/api/profile/work-experiences/:id`
@@ -98,23 +150,22 @@ This document describes all backend API endpoints, their methods, request/respon
 
 ```json
 {
-  ...education fields...
+  "institution": string,
+  "degree": string,
+  "field": string,
+  "startDate": string,
+  "endDate": string,
+  "current": boolean,
+  "description": string
 }
 ```
 
-- **Response:** Updated education object.
+- **Response:** Created education object with ID.
 
 ### PATCH `/api/profile/educations/:id`
 
 - **Description:** Update an education.
-- **Request:**
-
-```json
-{
-  ...education fields...
-}
-```
-
+- **Request:** Education object (partial updates supported)
 - **Response:** Updated education object.
 
 ### DELETE `/api/profile/educations/:id`
@@ -155,7 +206,7 @@ This document describes all backend API endpoints, their methods, request/respon
 }
 ```
 
-- **Response:** Resume object.
+- **Response:** Resume object with parsed data.
 
 ### GET `/api/resumes`
 
@@ -166,39 +217,6 @@ This document describes all backend API endpoints, their methods, request/respon
 
 - **Description:** Delete a resume.
 - **Response:** `{ "success": boolean }`
-
----
-
-## Profile Reset
-
-### POST `/api/profile/reset`
-
-- **Description:** Reset the user's profile.
-- **Response:** `{ "success": boolean }`
-
----
-
-## User Data Export & Deletion
-
-### GET `/api/user/export-data`
-
-- **Description:** Export all user data.
-- **Response:**
-
-```json
-{
-  "profile": {...},
-  "workExperiences": [...],
-  "educations": [...],
-  "resumes": [...],
-  "answers": [...]
-}
-```
-
-### POST `/api/user/delete-account`
-
-- **Description:** Delete the user's account and data.
-- **Response:** `{ "message": string }`
 
 ---
 
@@ -216,7 +234,8 @@ This document describes all backend API endpoints, their methods, request/respon
 
 ```json
 {
-  ...answer fields...
+  "templateId": number,
+  "answer": any
 }
 ```
 
@@ -224,14 +243,82 @@ This document describes all backend API endpoints, their methods, request/respon
 
 ### GET `/api/answers`
 
-- **Description:** (Frontend expects this, backend does not implement. Consider adding.)
+- **Description:** Get all user answers.
+- **Response:** Array of user answer objects.
 
 ---
 
-## Notes & TODOs
+## System
 
-- Frontend expects `/api/resumes/upload` (POST), backend uses `/api/resume/process` (POST). Consider aligning.
-- Frontend expects `/api/profile/personal-info` (PATCH), backend does not implement. Consider adding.
-- Frontend expects `/api/answers` (GET), backend does not implement. Consider adding.
-- All endpoints require authentication (Bearer token in Authorization header).
-- Data shapes for profile, work experience, education, etc. are defined in `api/schema.js`.
+### GET `/api/health`
+
+- **Description:** Health check endpoint.
+- **Response:**
+
+```json
+{
+  "status": "healthy",
+  "message": "ApplicationBuddy API with Firebase",
+  "timestamp": string,
+  "firebase": "initialized" | "not configured"
+}
+```
+
+### GET `/api/templates`
+
+- **Description:** Get question templates (alias for /api/questions).
+- **Response:** Array of question template objects.
+
+---
+
+## Error Responses
+
+All endpoints return consistent error responses:
+
+```json
+{
+  "message": "Error description",
+  "error": "Detailed error message"
+}
+```
+
+Common HTTP status codes:
+
+- `400` - Bad Request (validation errors)
+- `401` - Unauthorized (invalid or missing token)
+- `404` - Not Found (resource doesn't exist)
+- `500` - Internal Server Error
+
+---
+
+## Authentication Flow
+
+1. **Frontend Authentication:** User signs in with Firebase Auth (Google, email/password, etc.)
+2. **Token Generation:** Firebase provides an ID token
+3. **API Requests:** Frontend includes token in Authorization header
+4. **Backend Verification:** Server verifies token with Firebase Admin SDK
+5. **User Resolution:** Server maps Firebase UID to database user (auto-creates if needed)
+6. **Request Processing:** Server processes request with authenticated user context
+
+---
+
+## Data Validation
+
+All request bodies are validated using Zod schemas:
+
+- `personalInfoSchema` - Personal information validation
+- `workExperienceSchema` - Work experience validation
+- `educationSchema` - Education validation
+- `profileSchema` - Profile validation
+- `questionTemplateSchema` - Question template validation
+- `userAnswerSchema` - User answer validation
+
+---
+
+## Firebase Integration
+
+- **Authentication:** Firebase Auth for user authentication
+- **Database:** Firestore for data storage
+- **Storage:** Firebase Storage for file uploads (resumes)
+- **Admin SDK:** Backend uses Firebase Admin for token verification and database access
+- **Client SDK:** Frontend uses Firebase client for authentication and token management
