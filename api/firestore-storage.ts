@@ -32,6 +32,34 @@ const RESUMES_COLLECTION = 'resumes';
 const QUESTION_TEMPLATES_COLLECTION = 'questionTemplates';
 const USER_ANSWERS_COLLECTION = 'userAnswers';
 
+// Utility function to convert Firestore timestamps to Date objects
+function convertFirestoreTimestamps(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+  
+  if (typeof obj === 'object') {
+    // Check if it's a Firestore timestamp
+    if (obj._seconds !== undefined && obj._nanoseconds !== undefined) {
+      return new Date(obj._seconds * 1000 + obj._nanoseconds / 1000000);
+    }
+    
+    // Handle arrays
+    if (Array.isArray(obj)) {
+      return obj.map(convertFirestoreTimestamps);
+    }
+    
+    // Handle objects
+    const converted: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      converted[key] = convertFirestoreTimestamps(value);
+    }
+    return converted;
+  }
+  
+  return obj;
+}
+
 // Add transaction helper
 async function runInTransaction<T>(operation: (transaction: Transaction) => Promise<T>): Promise<T> {
   try {
@@ -446,7 +474,8 @@ export class FirestoreStorage implements IStorage {
       }
       
       const profileData = snapshot.docs[0].data();
-      return { id: profileData.id, ...profileData } as Profile;
+      const convertedData = convertFirestoreTimestamps({ id: profileData.id, ...profileData });
+      return convertedData as Profile;
     } catch (error) {
       console.error('Error getting profile:', error);
       throw error;
@@ -513,8 +542,9 @@ export class FirestoreStorage implements IStorage {
         id: profileId
       };
       
-      // Use type assertion to handle Firestore timestamp vs Date typing
-      return updatedProfile as unknown as Profile;
+      // Convert Firestore timestamps to Date objects
+      const convertedData = convertFirestoreTimestamps(updatedProfile);
+      return convertedData as Profile;
     } catch (error) {
       console.error('Error updating profile:', error);
       throw error;
@@ -547,8 +577,9 @@ export class FirestoreStorage implements IStorage {
         id: profileId
       };
       
-      // Use type assertion to handle Firestore timestamp vs Date typing
-      return updatedProfile as unknown as Profile;
+      // Convert Firestore timestamps to Date objects
+      const convertedData = convertFirestoreTimestamps(updatedProfile);
+      return convertedData as Profile;
     } catch (error) {
       console.error('Error updating personal info:', error);
       throw error;
@@ -591,12 +622,12 @@ export class FirestoreStorage implements IStorage {
         ...snapshot.data(),
         skills: normalizedSkills, // Ensure we use our normalized array
         completionPercentage,
-        id: profileId,
-        updatedAt: new Date() // Convert Firestore timestamp to Date for the return value
+        id: profileId
       };
       
-      // Use type assertion to handle Firestore timestamp vs Date typing
-      return updatedProfile as unknown as Profile;
+      // Convert Firestore timestamps to Date objects
+      const convertedData = convertFirestoreTimestamps(updatedProfile);
+      return convertedData as Profile;
     } catch (error) {
       console.error('Error updating skills:', error);
       throw error;
@@ -716,10 +747,11 @@ export class FirestoreStorage implements IStorage {
       
       snapshot.forEach(doc => {
         const data = doc.data();
-        workExperiences.push({
+        const convertedData = convertFirestoreTimestamps({
           id: parseInt(doc.id),
           ...data
-        } as WorkExperience);
+        });
+        workExperiences.push(convertedData as WorkExperience);
       });
       
       return workExperiences;
@@ -767,7 +799,9 @@ export class FirestoreStorage implements IStorage {
       // Update profile completion percentage
       await this.updateProfileCompletionPercentage(profileId);
       
-      return newWorkExp as WorkExperience;
+      // Convert Firestore timestamps to Date objects
+      const convertedData = convertFirestoreTimestamps(newWorkExp);
+      return convertedData as WorkExperience;
     } catch (error) {
       console.error('Error adding work experience:', error);
       throw error;
@@ -802,7 +836,9 @@ export class FirestoreStorage implements IStorage {
         id
       };
       
-      return updatedWorkExp as WorkExperience;
+      // Convert Firestore timestamps to Date objects
+      const convertedData = convertFirestoreTimestamps(updatedWorkExp);
+      return convertedData as WorkExperience;
     } catch (error) {
       console.error('Error updating work experience:', error);
       throw error;
@@ -855,10 +891,11 @@ export class FirestoreStorage implements IStorage {
       
       snapshot.forEach(doc => {
         const data = doc.data();
-        educations.push({
+        const convertedData = convertFirestoreTimestamps({
           id: parseInt(doc.id),
           ...data
-        } as Education);
+        });
+        educations.push(convertedData as Education);
       });
       
       return educations;
@@ -906,7 +943,9 @@ export class FirestoreStorage implements IStorage {
       // Update profile completion percentage
       await this.updateProfileCompletionPercentage(profileId);
       
-      return newEducation as Education;
+      // Convert Firestore timestamps to Date objects
+      const convertedData = convertFirestoreTimestamps(newEducation);
+      return convertedData as Education;
     } catch (error) {
       console.error('Error adding education:', error);
       throw error;
@@ -941,7 +980,9 @@ export class FirestoreStorage implements IStorage {
         id
       };
       
-      return updatedEducation as Education;
+      // Convert Firestore timestamps to Date objects
+      const convertedData = convertFirestoreTimestamps(updatedEducation);
+      return convertedData as Education;
     } catch (error) {
       console.error('Error updating education:', error);
       throw error;
@@ -984,18 +1025,11 @@ export class FirestoreStorage implements IStorage {
       
       snapshot.forEach(doc => {
         const data = doc.data();
-        
-        // Convert Firestore timestamp to string date
-        let uploadedAt = data.uploadedAt;
-        if (uploadedAt && typeof uploadedAt.toDate === 'function') {
-          uploadedAt = uploadedAt.toDate().toISOString();
-        }
-        
-        resumes.push({
+        const convertedData = convertFirestoreTimestamps({
           id: parseInt(doc.id),
-          ...data,
-          uploadedAt
-        } as Resume);
+          ...data
+        });
+        resumes.push(convertedData as Resume);
       });
       
       return resumes;
@@ -1028,11 +1062,9 @@ export class FirestoreStorage implements IStorage {
       
       await db.collection(RESUMES_COLLECTION).doc(nextId.toString()).set(newResume);
       
-      // Convert the Firestore timestamp for the response
-      return {
-        ...newResume,
-        uploadedAt: new Date().toISOString() // Use current date as an approximation
-      } as Resume;
+      // Convert Firestore timestamps to Date objects
+      const convertedData = convertFirestoreTimestamps(newResume);
+      return convertedData as Resume;
     } catch (error) {
       console.error('Error adding resume:', error);
       throw error;
