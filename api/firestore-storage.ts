@@ -1,5 +1,4 @@
 import { getFirestore, FieldValue, Transaction, DocumentSnapshot, QueryDocumentSnapshot } from 'firebase-admin/firestore';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import type { ServiceAccount } from 'firebase-admin';
 import { IStorage } from './storage.js';
 import { 
@@ -7,20 +6,7 @@ import {
   QuestionTemplate, UserAnswer, QuestionTemplateData, UserAnswerData
 } from './schema.js';
 
-// Initialize Firebase Admin if not already initialized
-if (!getApps().length) {
-  const credentialObject: ServiceAccount = {
-    projectId: process.env.FIREBASE_PROJECT_ID || "jobassist-xmxdx",
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-  };
-
-  initializeApp({
-    credential: cert(credentialObject),
-  });
-}
-
-// Get Firestore instance
+// Get Firestore instance (Firebase Admin is initialized in index.ts)
 const db = getFirestore();
 
 // Define Firestore collections

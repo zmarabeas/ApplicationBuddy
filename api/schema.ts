@@ -78,6 +78,8 @@ export type WorkExperience = {
   endDate?: string;
   current?: boolean;
   description?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 export type Education = {
   id: number;
@@ -88,9 +90,22 @@ export type Education = {
   endDate?: string;
   current?: boolean;
   description?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
-export type Profile = z.infer<typeof profileSchema> & { id: number, userId: number };
-export type Resume = z.infer<typeof resumeSchema> & { id: number, userId: number };
+export type Profile = z.infer<typeof profileSchema> & { 
+  id: number; 
+  userId: number; 
+  createdAt?: Date; 
+  updatedAt?: Date; 
+};
+export type Resume = z.infer<typeof resumeSchema> & { 
+  id: number; 
+  userId: number; 
+  uploadedAt?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+};
 export type QuestionTemplate = QuestionTemplateData & {
   id: number;
   createdAt: Date;

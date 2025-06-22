@@ -23,8 +23,25 @@ let mammoth: any;
     console.log('Document parser modules loaded successfully');
   } catch (err) {
     console.error('Error loading document parser modules:', err);
+    // Don't throw - we'll handle this gracefully when processing files
   }
 })();
+
+// Function to ensure modules are loaded before use
+async function ensureModulesLoaded() {
+  if (!pdfParse || !mammoth) {
+    try {
+      const pdfParseModule = await import('pdf-parse');
+      const mammothModule = await import('mammoth');
+      
+      pdfParse = pdfParseModule.default;
+      mammoth = mammothModule.default;
+    } catch (err) {
+      console.error('Failed to load document parser modules:', err);
+      throw new Error('Document parser modules not available');
+    }
+  }
+}
 
 // Setup multer for file uploads
 const storage = multer.diskStorage({
@@ -70,6 +87,7 @@ export const upload = multer({
  */
 async function extractTextFromPDF(filePath: string): Promise<string> {
   try {
+    await ensureModulesLoaded();
     const dataBuffer = fs.readFileSync(filePath);
     const data = await pdfParse(dataBuffer);
     return data.text;
@@ -84,6 +102,7 @@ async function extractTextFromPDF(filePath: string): Promise<string> {
  */
 async function extractTextFromDOCX(filePath: string): Promise<string> {
   try {
+    await ensureModulesLoaded();
     const result = await mammoth.extractRawText({ path: filePath });
     return result.value;
   } catch (error) {
