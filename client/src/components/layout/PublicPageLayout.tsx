@@ -2,7 +2,8 @@ import { ReactNode } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { Zap, LogOut } from "lucide-react";
+import AnimatedIcon from "@/components/ui/animated-icon";
+import { LogOut } from "lucide-react";
 
 interface PublicPageLayoutProps {
   children: ReactNode;
@@ -30,7 +31,7 @@ export default function PublicPageLayout({ children, title }: PublicPageLayoutPr
           <div className="flex justify-between h-16 items-center">
             <div className="flex-shrink-0 flex items-center space-x-2">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <Zap className="w-5 h-5 text-primary-foreground" />
+                <AnimatedIcon size={20} />
               </div>
               <h1 
                 className="text-xl font-bold text-foreground cursor-pointer"

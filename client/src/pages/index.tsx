@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import AnimatedIcon from '@/components/ui/animated-icon';
 import { 
   Chrome, 
   Zap, 
@@ -43,7 +44,7 @@ export default function LandingPage() {
           <div className="flex justify-between h-16 items-center">
             <div className="flex-shrink-0 flex items-center space-x-2">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <Zap className="w-5 h-5 text-primary-foreground" />
+                <AnimatedIcon size={20} />
               </div>
               <h1 className="text-xl font-bold text-foreground">ApplicationBuddy</h1>
             </div>
@@ -158,6 +159,21 @@ export default function LandingPage() {
               )}
             </div>
 
+            {/* Social Proof */}
+            <div className="flex items-center justify-center space-x-8 text-muted-foreground">
+              <div className="flex items-center space-x-2">
+                <Users className="w-5 h-5" />
+                <span>10,000+ Users</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Star className="w-5 h-5 text-yellow-500 fill-current" />
+                <span>4.8/5 Rating</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <TrendingUp className="w-5 h-5" />
+                <span>95% Success Rate</span>
+              </div>
+            </div>
           </motion.div>
         </div>
       </section>
@@ -431,7 +447,7 @@ export default function LandingPage() {
           <div className="border-t border-border/40 pt-8 flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-2 mb-4 md:mb-0">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <Zap className="w-5 h-5 text-primary-foreground" />
+                <AnimatedIcon size={20} />
               </div>
               <span className="text-foreground font-semibold">ApplicationBuddy</span>
             </div>

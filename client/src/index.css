@@ -61,5 +61,30 @@
       linear-gradient(90deg, rgba(76, 136, 254, 0.05) 1px, transparent 1px);
     background-size: 20px 20px;
   }
+  
+  /* Animated Search Icon Styles */
+  .animated-search-icon:hover {
+    transform: scale(1.1) rotate(5deg);
+  }
+  
+  .animated-search-icon:hover .search-circle {
+    border-color: #4facfe;
+    box-shadow: 0 0 15px rgba(79, 172, 254, 0.4);
+  }
+  
+  .animated-search-icon:hover .search-handle {
+    background: #4facfe;
+    box-shadow: 0 0 10px rgba(79, 172, 254, 0.4);
+  }
+  
+  .animated-search-icon:hover .ai-dot {
+    background: #4facfe;
+    animation: pulse 1s ease-in-out infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.5); }
+  }
 }
 

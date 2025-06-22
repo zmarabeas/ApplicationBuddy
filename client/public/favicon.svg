@@ -1,0 +1,10 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Search Circle -->
+  <circle cx="16" cy="16" r="12" stroke="#667eea" stroke-width="3" fill="none"/>
+  
+  <!-- Search Handle -->
+  <rect x="20" y="20" width="3" height="10" rx="1.5" fill="#667eea" transform="rotate(45 20 20)"/>
+  
+  <!-- AI Dot -->
+  <circle cx="16" cy="16" r="3" fill="#667eea"/>
+</svg> 
