@@ -12,6 +12,8 @@
     "check": "tsc"
   },
   "dependencies": {
+    "@google-cloud/firestore": "^7.1.0",
+    "@google-cloud/storage": "^7.7.0",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.4",
     "@radix-ui/react-alert-dialog": "^1.1.7",
