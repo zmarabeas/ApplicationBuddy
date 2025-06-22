@@ -128,7 +128,7 @@ export default function WorkExperienceForm() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h3 className="text-md font-medium text-gray-900">Work Experience</h3>
+        <h3 className="text-md font-medium text-foreground">Work Experience</h3>
         {!isAddingNew && !editMode && (
           <Button
             onClick={handleAddNew}
@@ -145,12 +145,12 @@ export default function WorkExperienceForm() {
       {!isAddingNew && !editMode && workExperiences.length > 0 && (
         <div className="space-y-4">
           {workExperiences.map((exp) => (
-            <Card key={exp.id} className="shadow-sm hover:shadow transition-shadow">
+            <Card key={exp.id} className="shadow-sm hover:shadow transition-shadow border-border">
               <CardContent className="p-4">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex justify-between">
-                      <h4 className="text-sm font-semibold text-gray-900">{exp.title}</h4>
+                      <h4 className="text-sm font-semibold text-foreground">{exp.title}</h4>
                       <CopyButton 
                         value={exp.title}
                         variant="ghost"
@@ -159,7 +159,7 @@ export default function WorkExperienceForm() {
                       />
                     </div>
                     <div className="flex justify-between">
-                      <p className="text-sm text-gray-600">{exp.company}</p>
+                      <p className="text-sm text-muted-foreground">{exp.company}</p>
                       <CopyButton 
                         value={exp.company}
                         variant="ghost"
@@ -169,7 +169,7 @@ export default function WorkExperienceForm() {
                     </div>
                     {exp.location && (
                       <div className="flex justify-between">
-                        <p className="text-xs text-gray-500">{exp.location}</p>
+                        <p className="text-xs text-muted-foreground">{exp.location}</p>
                         <CopyButton 
                           value={exp.location}
                           variant="ghost"
@@ -178,13 +178,13 @@ export default function WorkExperienceForm() {
                         />
                       </div>
                     )}
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {formatDate(exp.startDate)} - {exp.current ? "Present" : formatDate(exp.endDate)}
                     </p>
                     {exp.description && (
                       <div className="mt-2">
                         <div className="flex justify-between items-start">
-                          <p className="text-sm text-gray-600 pr-2">{exp.description}</p>
+                          <p className="text-sm text-muted-foreground pr-2">{exp.description}</p>
                           <CopyButton 
                             value={exp.description}
                             variant="ghost"
@@ -195,7 +195,7 @@ export default function WorkExperienceForm() {
                       </div>
                     )}
                     
-                    <div className="mt-2 pt-2 border-t border-gray-100">
+                    <div className="mt-2 pt-2 border-t border-border">
                       <CopyButton 
                         value={`${exp.title} at ${exp.company}${exp.location ? ` (${exp.location})` : ''}, ${formatDate(exp.startDate)} - ${exp.current ? "Present" : formatDate(exp.endDate)}${exp.description ? `\n\n${exp.description}` : ''}`}
                         variant="outline"
@@ -205,17 +205,28 @@ export default function WorkExperienceForm() {
                       />
                     </div>
                   </div>
-                  <div className="flex space-x-1 ml-2">
+                  
+                  <div className="flex gap-2 ml-4">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(exp)}
+                      className="h-8 w-8 p-0"
                     >
-                      Edit
+                      <span className="sr-only">Edit</span>
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
                     </Button>
+                    
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          <span className="sr-only">Delete</span>
                           <Trash className="h-4 w-4" />
                         </Button>
                       </AlertDialogTrigger>
@@ -230,7 +241,7 @@ export default function WorkExperienceForm() {
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() => handleDelete(exp.id)}
-                            className="bg-red-500 hover:bg-red-600 text-white"
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           >
                             Delete
                           </AlertDialogAction>
@@ -245,21 +256,27 @@ export default function WorkExperienceForm() {
         </div>
       )}
 
-      {/* Empty state */}
-      {!isAddingNew && !editMode && workExperiences.length === 0 && (
-        <div className="text-center p-6 border border-dashed border-gray-300 rounded-md">
-          <p className="text-gray-500 mb-4">You haven't added any work experience yet.</p>
-          <Button onClick={handleAddNew} variant="outline">
-            <Plus className="h-4 w-4 mr-1" />
-            Add Work Experience
-          </Button>
-        </div>
-      )}
-
-      {/* Form for adding/editing work experience */}
+      {/* Add/Edit form */}
       {(isAddingNew || editMode) && (
-        <Card>
-          <CardContent className="p-4">
+        <Card className="border-border">
+          <CardContent className="p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="text-lg font-medium text-foreground">
+                {editMode ? "Edit Work Experience" : "Add Work Experience"}
+              </h4>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCancel}
+                className="h-8 w-8 p-0"
+              >
+                <span className="sr-only">Cancel</span>
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </Button>
+            </div>
+            
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -268,7 +285,7 @@ export default function WorkExperienceForm() {
                     name="company"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Company *</FormLabel>
+                        <FormLabel className="text-foreground">Company</FormLabel>
                         <FormControl>
                           <Input placeholder="Company name" {...field} />
                         </FormControl>
@@ -276,12 +293,13 @@ export default function WorkExperienceForm() {
                       </FormItem>
                     )}
                   />
+                  
                   <FormField
                     control={form.control}
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Job Title *</FormLabel>
+                        <FormLabel className="text-foreground">Job Title</FormLabel>
                         <FormControl>
                           <Input placeholder="Job title" {...field} />
                         </FormControl>
@@ -296,9 +314,9 @@ export default function WorkExperienceForm() {
                   name="location"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Location</FormLabel>
+                      <FormLabel className="text-foreground">Location</FormLabel>
                       <FormControl>
-                        <Input placeholder="City, State, Country" {...field} />
+                        <Input placeholder="City, State or Remote" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -311,7 +329,7 @@ export default function WorkExperienceForm() {
                     name="startDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Start Date</FormLabel>
+                        <FormLabel className="text-foreground">Start Date</FormLabel>
                         <FormControl>
                           <Input type="month" {...field} />
                         </FormControl>
@@ -319,53 +337,57 @@ export default function WorkExperienceForm() {
                       </FormItem>
                     )}
                   />
-                  <div>
-                    <FormField
-                      control={form.control}
-                      name="current"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 mb-2">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>I currently work here</FormLabel>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                    {!form.watch("current") && (
-                      <FormField
-                        control={form.control}
-                        name="endDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>End Date</FormLabel>
-                            <FormControl>
-                              <Input type="month" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                  
+                  <FormField
+                    control={form.control}
+                    name="endDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-foreground">End Date</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="month" 
+                            {...field} 
+                            disabled={form.watch("current")}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  </div>
+                  />
                 </div>
+                
+                <FormField
+                  control={form.control}
+                  name="current"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-foreground">
+                          I currently work here
+                        </FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
                 
                 <FormField
                   control={form.control}
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel className="text-foreground">Description</FormLabel>
                       <FormControl>
-                        <Textarea
-                          placeholder="Describe your responsibilities and achievements"
-                          className="min-h-[120px]"
-                          {...field}
+                        <Textarea 
+                          placeholder="Describe your role, responsibilities, and achievements..."
+                          className="min-h-[100px]"
+                          {...field} 
                         />
                       </FormControl>
                       <FormMessage />
@@ -373,16 +395,29 @@ export default function WorkExperienceForm() {
                   )}
                 />
                 
-                <div className="flex justify-end space-x-2">
-                  <Button variant="outline" onClick={handleCancel} type="button">
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={handleCancel}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isSaving}>
-                    {isSaving ? "Saving..." : "Save"}
+                    {isSaving ? "Saving..." : (editMode ? "Update" : "Add")}
                   </Button>
                 </div>
               </form>
             </Form>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty state */}
+      {!isAddingNew && !editMode && workExperiences.length === 0 && (
+        <Card className="border-border">
+          <CardContent className="p-6 text-center">
+            <p className="text-muted-foreground mb-4">You haven't added any work experience yet.</p>
+            <Button onClick={handleAddNew} variant="outline">
+              <Plus className="h-4 w-4 mr-1" />
+              Add Work Experience
+            </Button>
           </CardContent>
         </Card>
       )}

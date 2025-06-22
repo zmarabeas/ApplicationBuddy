@@ -76,7 +76,7 @@ export default function SkillsForm() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h3 className="text-md font-medium text-gray-900">Skills</h3>
+        <h3 className="text-md font-medium text-foreground">Skills</h3>
         {!isAdding && (
           <Button
             onClick={() => setIsAdding(true)}
@@ -114,7 +114,7 @@ export default function SkillsForm() {
                     <button
                       type="button"
                       onClick={() => handleRemoveSkill(skill)}
-                      className="text-secondary-500 hover:text-secondary-700"
+                      className="text-muted-foreground hover:text-foreground transition-colors"
                       disabled={isSaving}
                     >
                       <X className="h-3 w-3" />
@@ -125,8 +125,8 @@ export default function SkillsForm() {
             </div>
           </>
         ) : (
-          <div className="text-center p-6 w-full border border-dashed border-gray-300 rounded-md">
-            <p className="text-gray-500 mb-4">You haven't added any skills yet.</p>
+          <div className="text-center p-6 w-full border border-dashed border-border rounded-md">
+            <p className="text-muted-foreground mb-4">You haven't added any skills yet.</p>
             <Button onClick={() => setIsAdding(true)} variant="outline">
               <Plus className="h-4 w-4 mr-1" />
               Add Skills

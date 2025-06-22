@@ -128,7 +128,7 @@ export default function EducationForm() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h3 className="text-md font-medium text-gray-900">Education</h3>
+        <h3 className="text-md font-medium text-foreground">Education</h3>
         {!isAddingNew && !editMode && (
           <Button
             onClick={handleAddNew}
@@ -145,12 +145,12 @@ export default function EducationForm() {
       {!isAddingNew && !editMode && educations.length > 0 && (
         <div className="space-y-4">
           {educations.map((edu) => (
-            <Card key={edu.id} className="shadow-sm hover:shadow transition-shadow">
+            <Card key={edu.id} className="shadow-sm hover:shadow transition-shadow border-border">
               <CardContent className="p-4">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex justify-between">
-                      <h4 className="text-sm font-semibold text-gray-900">{edu.institution}</h4>
+                      <h4 className="text-sm font-semibold text-foreground">{edu.institution}</h4>
                       <CopyButton 
                         value={edu.institution}
                         variant="ghost"
@@ -161,7 +161,7 @@ export default function EducationForm() {
                     
                     {edu.degree && edu.field && (
                       <div className="flex justify-between">
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-muted-foreground">
                           {edu.degree} in {edu.field}
                         </p>
                         <CopyButton 
@@ -174,7 +174,7 @@ export default function EducationForm() {
                     )}
                     {edu.degree && !edu.field && (
                       <div className="flex justify-between">
-                        <p className="text-sm text-gray-600">{edu.degree}</p>
+                        <p className="text-sm text-muted-foreground">{edu.degree}</p>
                         <CopyButton 
                           value={edu.degree}
                           variant="ghost"
@@ -185,7 +185,7 @@ export default function EducationForm() {
                     )}
                     {!edu.degree && edu.field && (
                       <div className="flex justify-between">
-                        <p className="text-sm text-gray-600">{edu.field}</p>
+                        <p className="text-sm text-muted-foreground">{edu.field}</p>
                         <CopyButton 
                           value={edu.field}
                           variant="ghost"
@@ -195,14 +195,14 @@ export default function EducationForm() {
                       </div>
                     )}
                     
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {formatDate(edu.startDate)} - {edu.current ? "Present" : formatDate(edu.endDate)}
                     </p>
                     
                     {edu.description && (
                       <div className="mt-2">
                         <div className="flex justify-between items-start">
-                          <p className="text-sm text-gray-600 pr-2">{edu.description}</p>
+                          <p className="text-sm text-muted-foreground pr-2">{edu.description}</p>
                           <CopyButton 
                             value={edu.description}
                             variant="ghost"
@@ -213,9 +213,9 @@ export default function EducationForm() {
                       </div>
                     )}
                     
-                    <div className="mt-2 pt-2 border-t border-gray-100">
+                    <div className="mt-2 pt-2 border-t border-border">
                       <CopyButton 
-                        value={`${edu.institution}${(edu.degree || edu.field) ? ` - ${edu.degree}${edu.field ? ` in ${edu.field}` : ''}` : ''}, ${formatDate(edu.startDate)} - ${edu.current ? "Present" : formatDate(edu.endDate)}${edu.description ? `\n\n${edu.description}` : ''}`}
+                        value={`${edu.institution}${edu.degree && edu.field ? ` - ${edu.degree} in ${edu.field}` : edu.degree ? ` - ${edu.degree}` : edu.field ? ` - ${edu.field}` : ''}, ${formatDate(edu.startDate)} - ${edu.current ? "Present" : formatDate(edu.endDate)}${edu.description ? `\n\n${edu.description}` : ''}`}
                         variant="outline"
                         size="sm"
                         displayText={true}
@@ -223,17 +223,28 @@ export default function EducationForm() {
                       />
                     </div>
                   </div>
-                  <div className="flex space-x-1 ml-2">
+                  
+                  <div className="flex gap-2 ml-4">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(edu)}
+                      className="h-8 w-8 p-0"
                     >
-                      Edit
+                      <span className="sr-only">Edit</span>
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
                     </Button>
+                    
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          <span className="sr-only">Delete</span>
                           <Trash className="h-4 w-4" />
                         </Button>
                       </AlertDialogTrigger>
@@ -241,14 +252,14 @@ export default function EducationForm() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Delete Education</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you want to delete this education? This action cannot be undone.
+                            Are you sure you want to delete this education entry? This action cannot be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() => handleDelete(edu.id)}
-                            className="bg-red-500 hover:bg-red-600 text-white"
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           >
                             Delete
                           </AlertDialogAction>
@@ -263,21 +274,27 @@ export default function EducationForm() {
         </div>
       )}
 
-      {/* Empty state */}
-      {!isAddingNew && !editMode && educations.length === 0 && (
-        <div className="text-center p-6 border border-dashed border-gray-300 rounded-md">
-          <p className="text-gray-500 mb-4">You haven't added any education yet.</p>
-          <Button onClick={handleAddNew} variant="outline">
-            <Plus className="h-4 w-4 mr-1" />
-            Add Education
-          </Button>
-        </div>
-      )}
-
-      {/* Form for adding/editing education */}
+      {/* Add/Edit form */}
       {(isAddingNew || editMode) && (
-        <Card>
-          <CardContent className="p-4">
+        <Card className="border-border">
+          <CardContent className="p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="text-lg font-medium text-foreground">
+                {editMode ? "Edit Education" : "Add Education"}
+              </h4>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCancel}
+                className="h-8 w-8 p-0"
+              >
+                <span className="sr-only">Cancel</span>
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </Button>
+            </div>
+            
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
@@ -285,9 +302,9 @@ export default function EducationForm() {
                   name="institution"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Institution *</FormLabel>
+                      <FormLabel className="text-foreground">Institution</FormLabel>
                       <FormControl>
-                        <Input placeholder="University or school name" {...field} />
+                        <Input placeholder="University or institution name" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -300,22 +317,23 @@ export default function EducationForm() {
                     name="degree"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Degree</FormLabel>
+                        <FormLabel className="text-foreground">Degree</FormLabel>
                         <FormControl>
-                          <Input placeholder="BS, MS, PhD, etc." {...field} />
+                          <Input placeholder="e.g., Bachelor's, Master's, PhD" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                  
                   <FormField
                     control={form.control}
                     name="field"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Field of Study</FormLabel>
+                        <FormLabel className="text-foreground">Field of Study</FormLabel>
                         <FormControl>
-                          <Input placeholder="Computer Science, Business, etc." {...field} />
+                          <Input placeholder="e.g., Computer Science, Business" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -329,7 +347,7 @@ export default function EducationForm() {
                     name="startDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Start Date</FormLabel>
+                        <FormLabel className="text-foreground">Start Date</FormLabel>
                         <FormControl>
                           <Input type="month" {...field} />
                         </FormControl>
@@ -337,53 +355,57 @@ export default function EducationForm() {
                       </FormItem>
                     )}
                   />
-                  <div>
-                    <FormField
-                      control={form.control}
-                      name="current"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 mb-2">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>I'm currently studying here</FormLabel>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                    {!form.watch("current") && (
-                      <FormField
-                        control={form.control}
-                        name="endDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>End Date</FormLabel>
-                            <FormControl>
-                              <Input type="month" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                  
+                  <FormField
+                    control={form.control}
+                    name="endDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-foreground">End Date</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="month" 
+                            {...field} 
+                            disabled={form.watch("current")}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  </div>
+                  />
                 </div>
+                
+                <FormField
+                  control={form.control}
+                  name="current"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-foreground">
+                          I am currently studying here
+                        </FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
                 
                 <FormField
                   control={form.control}
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel className="text-foreground">Description</FormLabel>
                       <FormControl>
-                        <Textarea
-                          placeholder="Additional information about your education"
-                          className="min-h-[80px]"
-                          {...field}
+                        <Textarea 
+                          placeholder="Describe your studies, achievements, or relevant coursework..."
+                          className="min-h-[100px]"
+                          {...field} 
                         />
                       </FormControl>
                       <FormMessage />
@@ -391,16 +413,29 @@ export default function EducationForm() {
                   )}
                 />
                 
-                <div className="flex justify-end space-x-2">
-                  <Button variant="outline" onClick={handleCancel} type="button">
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={handleCancel}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isSaving}>
-                    {isSaving ? "Saving..." : "Save"}
+                    {isSaving ? "Saving..." : (editMode ? "Update" : "Add")}
                   </Button>
                 </div>
               </form>
             </Form>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty state */}
+      {!isAddingNew && !editMode && educations.length === 0 && (
+        <Card className="border-border">
+          <CardContent className="p-6 text-center">
+            <p className="text-muted-foreground mb-4">You haven't added any education yet.</p>
+            <Button onClick={handleAddNew} variant="outline">
+              <Plus className="h-4 w-4 mr-1" />
+              Add Education
+            </Button>
           </CardContent>
         </Card>
       )}

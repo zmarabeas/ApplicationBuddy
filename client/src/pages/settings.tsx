@@ -135,27 +135,27 @@ export default function Settings() {
     <PageLayout title="Settings">
       <div className="mt-6 space-y-6 max-w-3xl">
         {/* Account Settings */}
-        <Card>
+        <Card className="border-border">
           <CardHeader>
-            <CardTitle className="flex items-center">
+            <CardTitle className="flex items-center text-foreground">
               <Shield className="w-5 h-5 mr-2 text-primary" />
               Account Settings
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-muted-foreground">
               Manage your account settings and password
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email" className="text-foreground">Email Address</Label>
                 <Input
                   id="email"
                   type="email"
                   value={currentUser?.email || ""}
                   disabled
                 />
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   Your email address is used for login and communications.
                 </p>
               </div>
@@ -165,7 +165,7 @@ export default function Settings() {
 
             <form onSubmit={handlePasswordChange} className="space-y-4">
               <div className="space-y-1">
-                <Label htmlFor="current-password">Current Password</Label>
+                <Label htmlFor="current-password" className="text-foreground">Current Password</Label>
                 <Input
                   id="current-password"
                   type="password"
@@ -179,7 +179,7 @@ export default function Settings() {
                 />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="new-password">New Password</Label>
+                <Label htmlFor="new-password" className="text-foreground">New Password</Label>
                 <Input
                   id="new-password"
                   type="password"
@@ -193,7 +193,7 @@ export default function Settings() {
                 />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="confirm-password">Confirm New Password</Label>
+                <Label htmlFor="confirm-password" className="text-foreground">Confirm New Password</Label>
                 <Input
                   id="confirm-password"
                   type="password"
@@ -207,49 +207,44 @@ export default function Settings() {
                 />
               </div>
               <Button type="submit" disabled={isChangingPassword}>
-                {isChangingPassword ? "Updating..." : "Update Password"}
+                {isChangingPassword ? "Changing Password..." : "Change Password"}
               </Button>
             </form>
           </CardContent>
         </Card>
 
-        {/* Notification Preferences */}
-        <Card>
+        {/* Notification Settings */}
+        <Card className="border-border">
           <CardHeader>
-            <CardTitle className="flex items-center">
+            <CardTitle className="flex items-center text-foreground">
               <Bell className="w-5 h-5 mr-2 text-primary" />
-              Notification Preferences
+              Notification Settings
             </CardTitle>
-            <CardDescription>
-              Control how and when you receive notifications
+            <CardDescription className="text-muted-foreground">
+              Control how you receive notifications
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="email-notifications">Email Notifications</Label>
-                <p className="text-sm text-gray-500">
-                  Receive important updates and information via email
+                <Label className="text-foreground">Email Notifications</Label>
+                <p className="text-sm text-muted-foreground">
+                  Receive email updates about your account and applications
                 </p>
               </div>
               <Switch
-                id="email-notifications"
                 checked={emailNotifications}
                 onCheckedChange={setEmailNotifications}
               />
             </div>
-            <Separator />
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="autofill-notifications">
-                  Auto-Fill Notifications
-                </Label>
-                <p className="text-sm text-gray-500">
-                  Get notified when the extension auto-fills forms
+                <Label className="text-foreground">Auto-fill Notifications</Label>
+                <p className="text-sm text-muted-foreground">
+                  Get notified when forms are automatically filled
                 </p>
               </div>
               <Switch
-                id="autofill-notifications"
                 checked={autoFillNotifications}
                 onCheckedChange={setAutoFillNotifications}
               />
@@ -257,165 +252,97 @@ export default function Settings() {
           </CardContent>
         </Card>
 
-        {/* Browser Extension */}
-        <Card>
+        {/* Data Management */}
+        <Card className="border-border">
           <CardHeader>
-            <CardTitle className="flex items-center">
+            <CardTitle className="flex items-center text-foreground">
               <Download className="w-5 h-5 mr-2 text-primary" />
-              Browser Extension
+              Data Management
             </CardTitle>
-            <CardDescription>
-              Install and manage the JobFillr browser extension
+            <CardDescription className="text-muted-foreground">
+              Export your data or reset your profile
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <p className="font-medium">Install Extension</p>
-                <p className="text-sm text-gray-500">
-                  Auto-fill job applications with your profile data
+                <Label className="text-foreground">Export Data</Label>
+                <p className="text-sm text-muted-foreground">
+                  Download all your profile data and application history
+                </p>
+              </div>
+              <Button variant="outline" size="sm">
+                Export
+              </Button>
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="text-foreground">Reset Profile</Label>
+                <p className="text-sm text-muted-foreground">
+                  Clear all your profile data and start fresh
                 </p>
               </div>
               <Button 
-                onClick={() => {
-                  toast({
-                    title: "Extension Demo",
-                    description: "This would open the Chrome Web Store in a real app.",
-                  });
-                }}
+                variant="outline" 
+                size="sm"
+                onClick={() => setResetDialogOpen(true)}
+                className="text-destructive hover:text-destructive"
               >
-                Install Extension
+                <Trash2 className="w-4 h-4 mr-1" />
+                Reset
               </Button>
             </div>
           </CardContent>
         </Card>
 
         {/* Danger Zone */}
-        <Card className="border-red-200">
-          <CardHeader className="text-red-600">
-            <CardTitle className="flex items-center">
+        <Card className="border-destructive/20">
+          <CardHeader>
+            <CardTitle className="flex items-center text-destructive">
               <AlertCircle className="w-5 h-5 mr-2" />
               Danger Zone
             </CardTitle>
-            <CardDescription className="text-red-500">
-              Destructive actions for your account
+            <CardDescription className="text-muted-foreground">
+              Irreversible actions that will affect your account
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <p className="font-medium">Reset Profile Data</p>
-                <p className="text-sm text-gray-500">
-                  Delete all your profile data including work experience, education, skills, and resume uploads
-                </p>
-              </div>
-              <Button 
-                variant="outline" 
-                className="border-red-300 text-red-600"
-                onClick={() => setResetDialogOpen(true)}
-              >
-                Reset Profile
-              </Button>
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <p className="font-medium">Logout from all devices</p>
-                <p className="text-sm text-gray-500">
-                  Terminate all active sessions for your account
-                </p>
-              </div>
-              <Button variant="outline" className="border-red-300 text-red-600">
-                Logout All
-              </Button>
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <p className="font-medium">Log out</p>
-                <p className="text-sm text-gray-500">
-                  Log out from your current session
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                className="border-red-300 text-red-600"
-                onClick={handleLogout}
-              >
-                Log Out
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      
-      {/* Reset Profile Confirmation Dialog */}
-      <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center text-red-600">
-              <Trash2 className="h-5 w-5 mr-2" />
-              Reset Profile Data
-            </DialogTitle>
-            <DialogDescription className="text-red-500/80">
-              This action cannot be undone. This will permanently delete all your profile data.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="rounded-md bg-red-50 p-4 dark:bg-red-900/20">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <AlertCircle className="h-5 w-5 text-red-600" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-600">Warning</h3>
-                  <div className="mt-2 text-sm text-red-600/70">
-                    <p>
-                      This will permanently delete:
-                    </p>
-                    <ul className="list-disc pl-5 mt-1 space-y-1">
-                      <li>All work experience entries</li>
-                      <li>All education history</li>
-                      <li>Your skills list</li>
-                      <li>All personal information</li>
-                      <li>All uploaded resumes</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <DialogFooter className="flex sm:justify-between">
-            <Button 
-              variant="ghost" 
-              onClick={() => setResetDialogOpen(false)}
-            >
-              Cancel
-            </Button>
+          <CardContent>
             <Button 
               variant="destructive" 
-              onClick={handleProfileReset} 
-              disabled={isResettingProfile}
-              className="gap-1"
+              onClick={handleLogout}
+              className="w-full sm:w-auto"
             >
-              {isResettingProfile ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Resetting...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4" />
-                  Reset Profile
-                </>
-              )}
+              Sign Out
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </CardContent>
+        </Card>
+
+        {/* Reset Profile Dialog */}
+        <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="text-foreground">Reset Profile</DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                This action will permanently delete all your profile data, including work experience, 
+                education, skills, and personal information. This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setResetDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={handleProfileReset}
+                disabled={isResettingProfile}
+              >
+                {isResettingProfile ? "Resetting..." : "Reset Profile"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </PageLayout>
   );
 }

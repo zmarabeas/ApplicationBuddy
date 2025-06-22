@@ -134,12 +134,12 @@ export default function ResumePage() {
     <PageLayout title="Resume Management">
       <div className="mt-6 space-y-6">
         {/* Upload Card */}
-        <Card>
+        <Card className="border-border">
           <CardContent className="p-6">
             <div className="flex flex-col items-center justify-center p-4">
               <FileText className="w-16 h-16 text-primary mb-4" />
-              <h2 className="text-xl font-semibold mb-2">Upload Your Resume</h2>
-              <p className="text-center text-gray-500 mb-6 max-w-md">
+              <h2 className="text-xl font-semibold mb-2 text-foreground">Upload Your Resume</h2>
+              <p className="text-center text-muted-foreground mb-6 max-w-md">
                 Upload your resume to automatically fill your profile information.
                 We support PDF and DOCX formats up to 10MB.
               </p>
@@ -174,7 +174,7 @@ export default function ResumePage() {
               </label>
               
               {uploadError && (
-                <div className="mt-4 flex items-center text-red-500">
+                <div className="mt-4 flex items-center text-destructive">
                   <AlertCircle className="h-4 w-4 mr-2" />
                   <span>{uploadError}</span>
                 </div>
@@ -184,9 +184,9 @@ export default function ResumePage() {
         </Card>
 
         {/* Resumes List */}
-        <Card>
+        <Card className="border-border">
           <CardContent className="p-6">
-            <h2 className="text-lg font-semibold mb-4">Your Resumes</h2>
+            <h2 className="text-lg font-semibold mb-4 text-foreground">Your Resumes</h2>
             
             {isLoadingResumes ? (
               <div className="flex justify-center py-8">
@@ -195,19 +195,19 @@ export default function ResumePage() {
             ) : resumes.length > 0 ? (
               <div className="space-y-4">
                 {resumes.map((resume) => (
-                  <div key={resume.id} className="flex items-center justify-between p-4 border rounded-md">
+                  <div key={resume.id} className="flex items-center justify-between p-4 border border-border rounded-md">
                     <div className="flex items-center">
                       <FileText className="h-6 w-6 text-primary mr-3" />
                       <div>
-                        <p className="font-medium">{resume.filename}</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="font-medium text-foreground">{resume.filename}</p>
+                        <p className="text-sm text-muted-foreground">
                           Uploaded on {new Date(resume.uploadedAt).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="sm" className="text-red-500">
+                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
                           <Trash className="h-4 w-4" />
                         </Button>
                       </AlertDialogTrigger>
@@ -222,7 +222,7 @@ export default function ResumePage() {
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction 
                             onClick={() => handleDelete(resume.id)}
-                            className="bg-red-500 hover:bg-red-600 text-white"
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           >
                             Delete
                           </AlertDialogAction>
@@ -233,9 +233,9 @@ export default function ResumePage() {
                 ))}
               </div>
             ) : (
-              <div className="text-center p-8 border border-dashed border-gray-300 rounded-md">
-                <p className="text-gray-500 mb-2">You haven't uploaded any resumes yet.</p>
-                <p className="text-gray-400 text-sm">Upload a resume to get started.</p>
+              <div className="text-center p-8 border border-dashed border-border rounded-md">
+                <p className="text-muted-foreground mb-2">You haven't uploaded any resumes yet.</p>
+                <p className="text-muted-foreground text-sm">Upload a resume to get started.</p>
               </div>
             )}
           </CardContent>
