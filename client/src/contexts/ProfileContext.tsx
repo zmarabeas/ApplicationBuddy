@@ -82,13 +82,40 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   
   // Fetch profile data
   const { 
-    data: profileData, 
+    data: profile, 
     isLoading: isProfileLoading, 
     error: profileError 
-  } = useQuery<ProfileData>({
+  } = useQuery<Profile>({
     queryKey: ['/api/profile'],
     enabled: !!currentUser,
   });
+
+  // Fetch work experiences
+  const { 
+    data: workExperiences = [], 
+    isLoading: isWorkExpLoading 
+  } = useQuery<WorkExperience[]>({
+    queryKey: ['/api/profile/work-experiences'],
+    enabled: !!currentUser && !!profile,
+  });
+
+  // Fetch educations
+  const { 
+    data: educations = [], 
+    isLoading: isEducationLoading 
+  } = useQuery<Education[]>({
+    queryKey: ['/api/profile/educations'],
+    enabled: !!currentUser && !!profile,
+  });
+
+  // Combine data
+  const profileData: ProfileData | null = profile ? {
+    profile,
+    workExperiences: workExperiences || [],
+    educations: educations || [],
+  } : null;
+
+  const isLoading = isProfileLoading || isWorkExpLoading || isEducationLoading;
 
   // Mutations
   const updatePersonalInfoMutation = useMutation({
@@ -295,7 +322,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   const value: ProfileContextType = {
     profileData: profileData || null,
-    isLoading: isProfileLoading,
+    isLoading,
     error: profileError,
     updatePersonalInfo,
     addWorkExperience,

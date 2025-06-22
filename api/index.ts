@@ -105,6 +105,10 @@ async function handleProfile(req: any, res: any) {
       return res.status(404).json({ message: "Profile not found" });
     }
 
+    console.log('Profile data being sent to frontend:', JSON.stringify(profile, null, 2));
+    console.log('Profile completionPercentage:', profile.completionPercentage);
+    console.log('Profile type:', typeof profile.completionPercentage);
+
     res.json(profile);
   } catch (error) {
     console.error('Error in /profile:', error);
@@ -152,6 +156,27 @@ async function handleAddWorkExperience(req: any, res: any) {
     res.json(updatedWorkExp);
   } catch (error) {
     console.error('Error adding work experience:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+async function handleGetWorkExperiences(req: any, res: any) {
+  try {
+    const user = await authMiddleware(req);
+    const userId = await getUserId(user);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const profile = await firestoreStorage.getProfile(userId);
+    if (!profile) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+
+    const workExperiences = await firestoreStorage.getWorkExperiences(profile.id);
+    res.json(workExperiences);
+  } catch (error) {
+    console.error('Error getting work experiences:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 }
@@ -208,6 +233,27 @@ async function handleAddEducation(req: any, res: any) {
     res.json(updatedEducation);
   } catch (error) {
     console.error('Error adding education:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+async function handleGetEducations(req: any, res: any) {
+  try {
+    const user = await authMiddleware(req);
+    const userId = await getUserId(user);
+    if (!userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const profile = await firestoreStorage.getProfile(userId);
+    if (!profile) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+
+    const educations = await firestoreStorage.getEducations(profile.id);
+    res.json(educations);
+  } catch (error) {
+    console.error('Error getting educations:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 }
@@ -518,6 +564,10 @@ export default async (req: any, res: any) => {
       return await handleAddWorkExperience(req, res);
     }
 
+    if (path === '/profile/work-experiences' && method === 'GET') {
+      return await handleGetWorkExperiences(req, res);
+    }
+
     if (path.match(/^\/profile\/work-experiences\/\d+$/) && method === 'PATCH') {
       req.params = { id: path.split('/').pop() };
       return await handleUpdateWorkExperience(req, res);
@@ -530,6 +580,10 @@ export default async (req: any, res: any) => {
 
     if (path === '/profile/educations' && method === 'POST') {
       return await handleAddEducation(req, res);
+    }
+
+    if (path === '/profile/educations' && method === 'GET') {
+      return await handleGetEducations(req, res);
     }
 
     if (path.match(/^\/profile\/educations\/\d+$/) && method === 'PATCH') {
@@ -598,9 +652,11 @@ export default async (req: any, res: any) => {
         'GET /api/profile',
         'PUT /api/profile',
         'POST /api/profile/work-experiences',
+        'GET /api/profile/work-experiences',
         'PATCH /api/profile/work-experiences/:id',
         'DELETE /api/profile/work-experiences/:id',
         'POST /api/profile/educations',
+        'GET /api/profile/educations',
         'PATCH /api/profile/educations/:id',
         'DELETE /api/profile/educations/:id',
         'PATCH /api/profile/skills',
