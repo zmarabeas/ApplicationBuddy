@@ -31,7 +31,8 @@
       "@/*": ["client/src/*"],
       "@shared/*": ["shared/*"],
       "@assets/*": ["attached_assets/*"],
-      "react": ["./node_modules/@types/react"]
+      "react": ["./node_modules/@types/react"],
+      "react/jsx-runtime": ["./node_modules/@types/react/jsx-runtime"]
     },
     "allowImportingTsExtensions": true,
     "types": ["vitest/globals", "node", "@testing-library/jest-dom"],
