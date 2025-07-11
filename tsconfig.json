@@ -3,10 +3,11 @@
   "exclude": ["node_modules", "dist"],
   "compilerOptions": {
     "target": "ES2020",
-    "module": "NodeNext",
-    "moduleResolution": "nodenext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "lib": ["DOM", "DOM.Iterable", "ES2020"],
     "jsx": "react-jsx",
+    "jsxImportSource": "react",
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
@@ -32,6 +33,7 @@
       "@assets/*": ["attached_assets/*"]
     },
     "allowImportingTsExtensions": true,
+    "types": ["vitest/globals", "node", "@testing-library/jest-dom"],
     "noEmit": true
   }
 }

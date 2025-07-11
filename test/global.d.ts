@@ -1,4 +1,5 @@
 /// <reference types="vitest" />
+/// <reference types="vitest/globals" />
 /// <reference types="node" />
 /// <reference types="@testing-library/jest-dom" />
 
