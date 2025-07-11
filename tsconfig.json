@@ -30,7 +30,8 @@
     "paths": {
       "@/*": ["client/src/*"],
       "@shared/*": ["shared/*"],
-      "@assets/*": ["attached_assets/*"]
+      "@assets/*": ["attached_assets/*"],
+      "react": ["./node_modules/@types/react"]
     },
     "allowImportingTsExtensions": true,
     "types": ["vitest/globals", "node", "@testing-library/jest-dom"],
