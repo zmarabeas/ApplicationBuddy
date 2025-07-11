@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
-import handler from '../../api/index.js';
+import handler from '../../api/index.ts';
 
 // Mock firestore
 vi.mock('../../api/firestore-storage.js', () => ({

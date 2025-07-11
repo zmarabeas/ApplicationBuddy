@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
-import handler from '../../api/index.js';
+import handler from '../../api/index.ts';
 
 // Mock firestore layer
 const mockProfile = { id: 1, skills: ['js'], completionPercentage: 80 };

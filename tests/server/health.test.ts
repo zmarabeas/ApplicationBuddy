@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import handler from '../../api/index.js';
+import handler from '../../api/index.ts';
 import request from 'supertest';
 
 describe('API /api/health', () => {

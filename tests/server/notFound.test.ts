@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
-import handler from '../../api/index.js';
+import handler from '../../api/index.ts';
 
 describe('404 handling', () => {
   it('returns 404 for unknown path', async () => {
