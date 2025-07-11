@@ -5,3 +5,4 @@
 
 // Ambient declaration for Chrome APIs used in extension unit tests
 declare const chrome: any;
+declare module '@types/vitest';
