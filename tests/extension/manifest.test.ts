@@ -1,6 +1,10 @@
 import { readFileSync } from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { describe, it, expect } from 'vitest';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 describe('Extension manifest', () => {
   const manifestPath = path.resolve(

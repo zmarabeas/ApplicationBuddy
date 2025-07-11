@@ -31,7 +31,7 @@
       "@shared/*": ["shared/*"],
       "@assets/*": ["attached_assets/*"]
     },
-    "types": ["node", "vitest/globals"],
+    "types": ["node", "vitest"],
     "allowImportingTsExtensions": true,
     "noEmit": true
   }
