@@ -1,5 +1,5 @@
 {
-  "include": ["client/**/*", "shared/**/*", "api/**/*", "vite.config.ts"],
+  "include": ["client/**/*", "shared/**/*", "api/**/*", "vite.config.ts", "tests/**/*", "test/**/*"],
   "exclude": ["node_modules", "dist"],
   "compilerOptions": {
     "target": "ES2020",
@@ -31,6 +31,7 @@
       "@shared/*": ["shared/*"],
       "@assets/*": ["attached_assets/*"]
     },
+    "types": ["node", "vitest/globals"],
     "allowImportingTsExtensions": true,
     "noEmit": true
   }
